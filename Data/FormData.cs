@@ -1,6 +1,6 @@
 namespace Entity.Model
 {
-    public class DestinationData
+    public class FormData
     {
 
     }
