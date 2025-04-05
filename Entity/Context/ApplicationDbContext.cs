@@ -4,8 +4,9 @@ using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Configuration;
 using System.Data;
 using System.Reflection;
+using System.Reflection.Emit;
 
-namespace Entity.Contexts
+namespace Entity.Context
 {
     /// <summary>
     /// Representa el contexto de la base de datos de la aplicación, proporcionando configuraciones y métodos

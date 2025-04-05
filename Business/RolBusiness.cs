@@ -1,5 +1,5 @@
 ﻿using Data;
-using Entity.DTOs;
+using Entity.DTO;
 using Entity.Model;
 using Microsoft.Extensions.Logging;
 using System.ComponentModel.DataAnnotations;
@@ -10,14 +10,14 @@ namespace Business
     /// <summary>
     /// Clase de negocio encargada de la lógica relacionada con los roles del sistema.
     /// </summary>
-    public class RolBusiness
+    public class Business
     {
         private readonly RolData _rolData;
         private readonly ILogger _logger;
 
-        public RolBusiness(RolData rolData, ILogger logger)
+        public Business(RolBusiness rolbusiness, ILogger logger)
         {
-            _rolData = rolData;
+            _rolData = rolbusiness;
             _logger = logger;
         }
 

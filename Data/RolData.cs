@@ -1,7 +1,8 @@
 ﻿using Microsoft.Extensions.Logging;
 using Entity.Model;
-using Entity.Contexts;
+using Entity.Context;
 using Microsoft.EntityFrameworkCore;
+using Entity.DTO;
 
 namespace Data
 {
@@ -107,6 +108,11 @@ namespace Data
                 Console.WriteLine($"Error al eliminar el rol: {ex.Message}");
                 return false;
             }
+        }
+
+        public async Task CreateAsync(RolDTO rolDto)
+        {
+            throw new NotImplementedException();
         }
     }
 }

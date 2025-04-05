@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Logging;
 using Entity.Model;
-using Entity.Contexts;
+using Entity.Context;
 using Microsoft.EntityFrameworkCore;
 
 namespace Data

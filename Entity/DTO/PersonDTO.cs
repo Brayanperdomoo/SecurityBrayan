@@ -1,9 +1,10 @@
 using System;
 
-namespace Entity.Model
+namespace Entity.DTO
 {
-    public class PersonDto
+    public class PersonDTO
     {
+        public int PersonId { get; set; }
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public int Document { get; set; }
