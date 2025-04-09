@@ -2,125 +2,122 @@
 using Entity.DTO;
 using Entity.Model;
 using Microsoft.Extensions.Logging;
-using System.ComponentModel.DataAnnotations;
 using Utilities.Exceptions;
 
 namespace Business
 {
-    /// <summary>
-    /// Clase de negocio encargada de la lógica relacionada con los roles del sistema.
-    /// </summary>
-    public class RolBusiness
+
+    public class PermissionBusiness
     {
-        private readonly RolData _rolData;
+        private readonly PermissionData _permissionData;
         private readonly ILogger _logger;
 
-        public RolBusiness(RolData rolData, ILogger logger)
+        public PermissionBusiness(PermissionData permissionData, ILogger logger)
         {
-            _rolData = rolData;
+            _permissionData = permissionData;
             _logger = logger;
         }
 
-        // Método para obtener todos los roles como DTOs
-        public async Task<IEnumerable<RolDto>> GetAllRolesAsync()
+        // Método para obtener todos los permisos como DTOs
+        public async Task<IEnumerable<PermissionDTO>> GetAllPermissionsAsync()
         {
             try
             {
-                var roles = await _rolData.GetAllAsync();
-                var rolesDTO = new List<RolDto>();
+                var permissions = await _permissionData.GetAllAsync();
+                var permissionsDTO = new List<PermissionDTO>();
 
-                foreach (var rol in roles)
+                foreach (var permission in permissions)
                 {
-                    rolesDTO.Add(new RolDto
+                    permissionsDTO.Add(new PermissionDTO
                     {
-                        Id = rol.Id,
-                        Name = rol.Name,
-                        Active = rol.Active // Si existe en la entidad
+                        PermissionId = permission.PermissionId,
+                        PermissionName = permission.PermissionName,
+                        Description = permission.Description
                     });
                 }
 
-                return rolesDTO;
+                return permissionsDTO;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error al obtener todos los roles");
-                throw new ExternalServiceException("Base de datos", "Error al recuperar la lista de roles", ex);
+                _logger.LogError(ex, "Error al obtener todos los permisos");
+                throw new ExternalServiceException("Base de datos", "Error al recuperar la lista de permisos", ex);
             }
         }
 
-        // Método para obtener un rol por ID como DTO
-        public async Task<RolDto> GetRolByIdAsync(int id)
+        // Método para obtener un permiso por ID como DTO
+        public async Task<PermissionDTO> GetPermissionByIdAsync(int id)
         {
             if (id <= 0)
             {
-                _logger.LogWarning("Se intentó obtener un rol con ID inválido: {RolId}", id);
-                throw new Utilities.Exceptions.ValidationException("id", "El ID del rol debe ser mayor que cero");
+                _logger.LogWarning("Se intentó obtener un permiso con ID inválido: {PermissionId}", id);
+                throw new Utilities.Exceptions.ValidationException("id", "El ID del permiso debe ser mayor que cero");
             }
 
             try
             {
-                var rol = await _rolData.GetByIdAsync(id);
-                if (rol == null)
+                var permission = await _permissionData.GetByIdAsync(id);
+                if (permission == null)
                 {
-                    _logger.LogInformation("No se encontró ningún rol con ID: {RolId}", id);
-                    throw new EntityNotFoundException("Rol", id);
+                    _logger.LogInformation("No se encontró ningún permiso con ID: {PermissionId}", id);
+                    throw new EntityNotFoundException("Permiso", id);
                 }
 
-                return new RolDto
+                return new PermissionDTO
                 {
-                    Id = rol.Id,
-                    Name = rol.Name,
-                    Active = rol.Active
+                    PermissionName = permission.PermissionName,
+                    Description = permission.Description
                 };
             }
+
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error al obtener el rol con ID: {RolId}", id);
-                throw new ExternalServiceException("Base de datos", $"Error al recuperar el rol con ID {id}", ex);
+                _logger.LogError(ex, "Error al obtener el permiso con ID: {PermissionId}", id);
+                throw new ExternalServiceException("Base de datos", $"Error al recuperar el permiso con ID {id}", ex);
             }
         }
 
-        // Método para crear un rol desde un DTO
-        public async Task<RolDto> CreateRolAsync(RolDto RolDto)
+        // Método para crear un permiso desde un DTO
+        public async Task<PermissionDTO> CreatePermissionAsync(PermissionDTO PermissionDto)
         {
             try
             {
-                ValidateRol(RolDto);
+                ValidatePermission(PermissionDto);
 
-                var rol = new Rol
+                var permission = new Permission
                 {
-                    Name = RolDto.Name,
-                    Active = RolDto.Active // Si existe en la entidad
+                    PermissionName = PermissionDto.PermissionName,
+                    Description = PermissionDto.Description
                 };
 
-                var rolCreado = await _rolData.CreateAsync(rol);
+                var permissionCreado = await _permissionData.CreateAsync(permission);
 
-                return new RolDto
+                return new PermissionDTO
                 {
-                    Id = rolCreado.Id,
-                    Name = rolCreado.Name,
-                    Active = rolCreado.Active // Si existe en la entidad
+                    PermissionId = permissionCreado.PermissionId,
+                    PermissionName = permissionCreado.PermissionName,
+                    Description = permissionCreado.Description
                 };
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error al crear nuevo rol: {RolNombre}", RolDto?.Name ?? "null");
-                throw new ExternalServiceException("Base de datos", "Error al crear el rol", ex);
+                _logger.LogError(ex, "Error al crear nuevo usuario: {Username}", PermissionDto?.PermissionName ?? "null");
+                throw new ExternalServiceException("Base de datos", "Error al crear el usuario", ex);
             }
         }
 
         // Método para validar el DTO
-        private void ValidateRol(RolDto RolDto)
+        private void ValidatePermission(PermissionDTO PermissionDto)
         {
-            if (RolDto == null)
+            if (PermissionDto == null)
             {
-                throw new Utilities.Exceptions.ValidationException("El objeto rol no puede ser nulo");
+                throw new Utilities.Exceptions.ValidationException("El objeto usuario no puede ser nulo");
             }
 
-            if (string.IsNullOrWhiteSpace(RolDto.Name))
+            if (string.IsNullOrWhiteSpace(PermissionDto.PermissionName))
             {
-                _logger.LogWarning("Se intentó crear/actualizar un rol con Name vacío");
-                throw new Utilities.Exceptions.ValidationException("Name", "El Name del rol es obligatorio");
+                _logger.LogWarning("Se intentó crear/actualizar un usuario con Name vacío");
+                throw new Utilities.Exceptions.ValidationException("Name", "El Name del usuario es obligatorio");
             }
         }
     }

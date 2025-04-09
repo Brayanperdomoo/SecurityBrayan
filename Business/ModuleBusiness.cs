@@ -2,125 +2,119 @@ using Data;
 using Entity.DTO;
 using Entity.Model;
 using Microsoft.Extensions.Logging;
-using System.ComponentModel.DataAnnotations;
 using Utilities.Exceptions;
 
 namespace Business
 {
-    /// <summary>
-    /// Clase de negocio encargada de la lógica relacionada con los roles del sistema.
-    /// </summary>
-    public class RolBusiness
+
+    public class ModuleBusiness
     {
-        private readonly RolData _rolData;
+        private readonly ModuleData _moduleData;
         private readonly ILogger _logger;
 
-        public RolBusiness(RolData rolData, ILogger logger)
+        public ModuleBusiness(ModuleData moduleData, ILogger logger)
         {
-            _rolData = rolData;
+            _moduleData = moduleData;
             _logger = logger;
         }
 
-        // Método para obtener todos los roles como DTOs
-        public async Task<IEnumerable<RolDto>> GetAllRolesAsync()
+        // Método para obtener todos los modulos como DTOs
+        public async Task<IEnumerable<ModuleDTO>> GetAllModulesAsync()
         {
             try
             {
-                var roles = await _rolData.GetAllAsync();
-                var rolesDTO = new List<RolDto>();
-
-                foreach (var rol in roles)
+                var modules = await _moduleData.GetAllAsync();
+                var modulesDTO = new List<ModuleDTO>();
+                
+                foreach (var module in modules)
                 {
-                    rolesDTO.Add(new RolDto
+                    modulesDTO.Add(new ModuleDTO
                     {
-                        Id = rol.Id,
-                        Name = rol.Name,
-                        Active = rol.Active // Si existe en la entidad
+                        ModuleId = module.ModuleId,
+                        Name = module.Name
                     });
                 }
 
-                return rolesDTO;
+                return modulesDTO;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error al obtener todos los roles");
-                throw new ExternalServiceException("Base de datos", "Error al recuperar la lista de roles", ex);
+                _logger.LogError(ex, "Error al obtener todos los modulos");
+                throw new ExternalServiceException("Base de datos", "Error al recuperar la lista de modulos", ex);
             }
         }
 
-        // Método para obtener un rol por ID como DTO
-        public async Task<RolDto> GetRolByIdAsync(int id)
+        // Método para obtener un modulo por ID como DTO
+        public async Task<ModuleDTO> GetModuleByIdAsync(int id)
         {
             if (id <= 0)
             {
-                _logger.LogWarning("Se intentó obtener un rol con ID inválido: {RolId}", id);
-                throw new Utilities.Exceptions.ValidationException("id", "El ID del rol debe ser mayor que cero");
+                _logger.LogWarning("Se intentó obtener un modulo con ID inválido: {ModuleId}", id);
+                throw new Utilities.Exceptions.ValidationException("id", "El ID del modulo debe ser mayor que cero");
             }
 
             try
             {
-                var rol = await _rolData.GetByIdAsync(id);
-                if (rol == null)
+                var module = await _moduleData.GetByIdAsync(id);
+                if (module == null)
                 {
-                    _logger.LogInformation("No se encontró ningún rol con ID: {RolId}", id);
-                    throw new EntityNotFoundException("Rol", id);
+                    _logger.LogInformation("No se encontró ningún modulo con ID: {ModuleId}", id);
+                    throw new EntityNotFoundException("Modulo", id);
                 }
 
-                return new RolDto
+                return new ModuleDTO
                 {
-                    Id = rol.Id,
-                    Name = rol.Name,
-                    Active = rol.Active
+                    ModuleId = module.ModuleId,
+                    Name = module.Name,
                 };
             }
+
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error al obtener el rol con ID: {RolId}", id);
-                throw new ExternalServiceException("Base de datos", $"Error al recuperar el rol con ID {id}", ex);
+                _logger.LogError(ex, "Error al obtener el modulo con ID: {ModuleId}", id);
+                throw new ExternalServiceException("Base de datos", $"Error al recuperar el modulo con ID {id}", ex);
             }
         }
 
-        // Método para crear un rol desde un DTO
-        public async Task<RolDto> CreateRolAsync(RolDto RolDto)
+        // Método para crear un modulo desde un DTO
+        public async Task<ModuleDTO> CreateModuleAsync(ModuleDTO ModuleDto)
         {
             try
             {
-                ValidateRol(RolDto);
+                ValidateModule(ModuleDto);
 
-                var rol = new Rol
+                var module = new Module
                 {
-                    Name = RolDto.Name,
-                    Active = RolDto.Active // Si existe en la entidad
+                    Name = ModuleDto.Name,
                 };
 
-                var rolCreado = await _rolData.CreateAsync(rol);
+                var moduleCreado = await _moduleData.CreateAsync(module);
 
-                return new RolDto
+                return new ModuleDTO
                 {
-                    Id = rolCreado.Id,
-                    Name = rolCreado.Name,
-                    Active = rolCreado.Active // Si existe en la entidad
+                    ModuleId = moduleCreado.ModuleId,
+                    Name = moduleCreado.Name,
                 };
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error al crear nuevo rol: {RolNombre}", RolDto?.Name ?? "null");
-                throw new ExternalServiceException("Base de datos", "Error al crear el rol", ex);
+                _logger.LogError(ex, "Error al crear nuevo modulo: {Name}", ModuleDto?.Name ?? "null");
+                throw new ExternalServiceException("Base de datos", "Error al crear el modulo", ex);
             }
         }
 
         // Método para validar el DTO
-        private void ValidateRol(RolDto RolDto)
+        private void ValidateModule(ModuleDTO ModuleDto)
         {
-            if (RolDto == null)
+            if (ModuleDto == null)
             {
-                throw new Utilities.Exceptions.ValidationException("El objeto rol no puede ser nulo");
+                throw new Utilities.Exceptions.ValidationException("El objeto modulo no puede ser nulo");
             }
 
-            if (string.IsNullOrWhiteSpace(RolDto.Name))
+            if (string.IsNullOrWhiteSpace(ModuleDto.Name))
             {
-                _logger.LogWarning("Se intentó crear/actualizar un rol con Name vacío");
-                throw new Utilities.Exceptions.ValidationException("Name", "El Name del rol es obligatorio");
+                _logger.LogWarning("Se intentó crear/actualizar un modulo con Name vacío");
+                throw new Utilities.Exceptions.ValidationException("Name", "El Name del modulo es obligatorio");
             }
         }
     }

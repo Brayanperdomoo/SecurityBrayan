@@ -6,121 +6,131 @@ using Utilities.Exceptions;
 
 namespace Business
 {
-    /// <summary>
-    /// Clase de negocio encargada de la lógica relacionada con los roles del sistema.
-    /// </summary>
-    public class RolBusiness
+    public class PersonBusiness
     {
-        private readonly RolData _rolData;
+        private readonly PersonData _personData;
         private readonly ILogger _logger;
 
-        public RolBusiness(RolData rolData, ILogger logger)
+        public PersonBusiness(PersonData personData, ILogger logger)
         {
-            _rolData = rolData;
+            _personData = personData;
             _logger = logger;
         }
 
-        // Método para obtener todos los roles como DTOs
-        public async Task<IEnumerable<RolDto>> GetAllRolesAsync()
+        // Método para obtener todas las personas como DTOs
+        public async Task<IEnumerable<PersonDTO>> GetAllPersonsAsync()
         {
             try
             {
-                var roles = await _rolData.GetAllAsync();
-                var rolesDTO = new List<RolDto>();
+                var persons = await _personData.GetAllAsync();
+                var personsDTO = new List<PersonDTO>();
 
-                foreach (var rol in roles)
+                foreach (var person in persons)
                 {
-                    rolesDTO.Add(new RolDto
+                    personsDTO.Add(new PersonDTO
                     {
-                        Id = rol.Id,
-                        Name = rol.Name,
-                        Active = rol.Active // Si existe en la entidad
+                        PersonId = person.PersonId,
+                        FirstName = person.FirstName,
+                        LastName = person.LastName,
+                        Document = person.Document,
+                        PhoneNumber = person.PhoneNumber,
+                        Email = person.Email
                     });
                 }
 
-                return rolesDTO;
+                return personsDTO;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error al obtener todos los roles");
-                throw new ExternalServiceException("Base de datos", "Error al recuperar la lista de roles", ex);
+                _logger.LogError(ex, "Error al obtener todos las personas");
+                throw new ExternalServiceException("Base de datos", "Error al recuperar la lista de personas", ex);
             }
         }
 
-        // Método para obtener un rol por ID como DTO
-        public async Task<RolDto> GetRolByIdAsync(int id)
+        // Método para obtener una persona por ID como DTO
+        public async Task<PersonDTO> GetPersonByIdAsync(int id)
         {
             if (id <= 0)
             {
-                _logger.LogWarning("Se intentó obtener un rol con ID inválido: {RolId}", id);
-                throw new Utilities.Exceptions.ValidationException("id", "El ID del rol debe ser mayor que cero");
+                _logger.LogWarning("Se intentó obtener una persona con ID inválido: {PersonId}", id);
+                throw new Utilities.Exceptions.ValidationException("id", "El ID de la persona debe ser mayor que cero");
             }
 
             try
             {
-                var rol = await _rolData.GetByIdAsync(id);
-                if (rol == null)
+                var person = await _personData.GetByIdAsync(id);
+                if (person == null)
                 {
-                    _logger.LogInformation("No se encontró ningún rol con ID: {RolId}", id);
-                    throw new EntityNotFoundException("Rol", id);
+                    _logger.LogInformation("No se encontró ningúna persona con ID: {PersonId}", id);
+                    throw new EntityNotFoundException("Person", id);
                 }
 
-                return new RolDto
+                return new PersonDTO
                 {
-                    Id = rol.Id,
-                    Name = rol.Name,
-                    Active = rol.Active
+                    FirstName = person.FirstName,
+                    LastName = person.LastName,
+                    Document = person.Document,
+                    PhoneNumber = person.PhoneNumber,
+                    Email = person.Email
                 };
             }
+
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error al obtener el rol con ID: {RolId}", id);
-                throw new ExternalServiceException("Base de datos", $"Error al recuperar el rol con ID {id}", ex);
+                _logger.LogError(ex, "Error al obtener la persona con ID: {PersonId}", id);
+                throw new ExternalServiceException("Base de datos", $"Error al recuperar la persona con ID {id}", ex);
             }
         }
 
-        // Método para crear un rol desde un DTO
-        public async Task<RolDto> CreateRolAsync(RolDto RolDto)
+        // Método para crear una persona desde un DTO
+        public async Task<PersonDTO> CreatePersonAsync(PersonDTO PersonDto)
         {
             try
             {
-                ValidateRol(RolDto);
+                ValidatePerson(PersonDto);
 
-                var rol = new Rol
+                var person = new Person
                 {
-                    Name = RolDto.Name,
-                    Active = RolDto.Active // Si existe en la entidad
+                    FirstName = PersonDto.FirstName,
+                    LastName = PersonDto.LastName,
+                    Document = PersonDto.Document,
+                    PhoneNumber = PersonDto.PhoneNumber,
+                    Email = PersonDto.Email
                 };
 
-                var rolCreado = await _rolData.CreateAsync(rol);
+                var personCreado = await _personData.CreateAsync(person);
 
-                return new RolDto
+                return new PersonDTO
                 {
-                    Id = rolCreado.Id,
-                    Name = rolCreado.Name,
-                    Active = rolCreado.Active // Si existe en la entidad
+                    PersonId = personCreado.PersonId,
+                    FirstName = personCreado.FirstName,
+                    LastName = personCreado.LastName,
+                    Document = personCreado.Document,
+                    PhoneNumber = personCreado.PhoneNumber,
+                    Email = personCreado.Email
                 };
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error al crear nuevo rol: {RolNombre}", RolDto?.Name ?? "null");
-                throw new ExternalServiceException("Base de datos", "Error al crear el rol", ex);
+                _logger.LogError(ex, "Error al crear nueva persona: {RolNombre}", PersonDto?.FirstName ?? "null");
+                throw new ExternalServiceException("Base de datos", "Error al crear la persona", ex);
             }
         }
 
         // Método para validar el DTO
-        private void ValidateRol(RolDto RolDto)
+        private void ValidatePerson(PersonDTO PersonDto)
         {
-            if (RolDto == null)
+            if (PersonDto == null)
             {
-                throw new Utilities.Exceptions.ValidationException("El objeto rol no puede ser nulo");
+                throw new Utilities.Exceptions.ValidationException("El objeto persona no puede ser nulo");
             }
 
-            if (string.IsNullOrWhiteSpace(RolDto.Name))
+            if (string.IsNullOrWhiteSpace(PersonDto.FirstName))
             {
-                _logger.LogWarning("Se intentó crear/actualizar un rol con Name vacío");
-                throw new Utilities.Exceptions.ValidationException("Name", "El Name del rol es obligatorio");
+                _logger.LogWarning("Se intentó crear/actualizar una persona con Name vacío");
+                throw new Utilities.Exceptions.ValidationException("Name", "El Name de la persona es obligatorio");
             }
         }
+
     }
 }

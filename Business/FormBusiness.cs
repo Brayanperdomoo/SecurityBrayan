@@ -2,125 +2,120 @@ using Data;
 using Entity.DTO;
 using Entity.Model;
 using Microsoft.Extensions.Logging;
-using System.ComponentModel.DataAnnotations;
+using Microsoft.SqlServer.Server;
 using Utilities.Exceptions;
 
 namespace Business
 {
-    /// <summary>
-    /// Clase de negocio encargada de la lógica relacionada con los roles del sistema.
-    /// </summary>
-    public class RolBusiness
+
+    public class FormBusiness
     {
-        private readonly RolData _rolData;
+        private readonly FormData _formData;
         private readonly ILogger _logger;
 
-        public RolBusiness(RolData rolData, ILogger logger)
+        public FormBusiness(FormData formData, ILogger logger)
         {
-            _rolData = rolData;
+            _formData = formData;
             _logger = logger;
         }
 
-        // Método para obtener todos los roles como DTOs
-        public async Task<IEnumerable<RolDto>> GetAllRolesAsync()
+        // Método para obtener todos los formularios como DTOs
+        public async Task<IEnumerable<FormDTO>> GetAllFormsAsync()
         {
             try
             {
-                var roles = await _rolData.GetAllAsync();
-                var rolesDTO = new List<RolDto>();
+                var forms = await _formData.GetAllAsync();
+                var formsDTO = new List<FormDTO>();
 
-                foreach (var rol in roles)
+                foreach (var form in forms)
                 {
-                    rolesDTO.Add(new RolDto
+                    formsDTO.Add(new FormDTO
                     {
-                        Id = rol.Id,
-                        Name = rol.Name,
-                        Active = rol.Active // Si existe en la entidad
+                        FormId = form.FormId,
+                        Name = form.Name
                     });
                 }
 
-                return rolesDTO;
+                return formsDTO;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error al obtener todos los roles");
-                throw new ExternalServiceException("Base de datos", "Error al recuperar la lista de roles", ex);
+                _logger.LogError(ex, "Error al obtener todos los formularios");
+                throw new ExternalServiceException("Base de datos", "Error al recuperar la lista de formularios", ex);
             }
         }
 
-        // Método para obtener un rol por ID como DTO
-        public async Task<RolDto> GetRolByIdAsync(int id)
+        // Método para obtener un formulario por ID como DTO
+        public async Task<FormDTO> GetFormByIdAsync(int id)
         {
             if (id <= 0)
             {
-                _logger.LogWarning("Se intentó obtener un rol con ID inválido: {RolId}", id);
-                throw new Utilities.Exceptions.ValidationException("id", "El ID del rol debe ser mayor que cero");
+                _logger.LogWarning("Se intentó obtener un formulario con ID inválido: {FormId}", id);
+                throw new Utilities.Exceptions.ValidationException("id", "El ID del formulario debe ser mayor que cero");
             }
 
             try
             {
-                var rol = await _rolData.GetByIdAsync(id);
-                if (rol == null)
+                var form = await _formData.GetByIdAsync(id);
+                if (form == null)
                 {
-                    _logger.LogInformation("No se encontró ningún rol con ID: {RolId}", id);
-                    throw new EntityNotFoundException("Rol", id);
+                    _logger.LogInformation("No se encontró ningún formulario con ID: {FormId}", id);
+                    throw new EntityNotFoundException("Form", id);
                 }
 
-                return new RolDto
+                return new FormDTO
                 {
-                    Id = rol.Id,
-                    Name = rol.Name,
-                    Active = rol.Active
+                    FormId = form.FormId,
+                    Name = form.Name,
                 };
             }
+
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error al obtener el rol con ID: {RolId}", id);
-                throw new ExternalServiceException("Base de datos", $"Error al recuperar el rol con ID {id}", ex);
+                _logger.LogError(ex, "Error al obtener el formulario con ID: {FormId}", id);
+                throw new ExternalServiceException("Base de datos", $"Error al recuperar el formulario con ID {id}", ex);
             }
         }
 
-        // Método para crear un rol desde un DTO
-        public async Task<RolDto> CreateRolAsync(RolDto RolDto)
+        // Método para crear un formulario desde un DTO
+        public async Task<FormDTO> CreateFormAsync(FormDTO FormDto)
         {
             try
             {
-                ValidateRol(RolDto);
+                ValidateForm(FormDto);
 
-                var rol = new Rol
+                var form = new Form
                 {
-                    Name = RolDto.Name,
-                    Active = RolDto.Active // Si existe en la entidad
+                    Name = FormDto.Name,
                 };
 
-                var rolCreado = await _rolData.CreateAsync(rol);
+                var formCreado = await _formData.CreateAsync(form);
 
-                return new RolDto
+                return new FormDTO
                 {
-                    Id = rolCreado.Id,
-                    Name = rolCreado.Name,
-                    Active = rolCreado.Active // Si existe en la entidad
+                    FormId = formCreado.FormId,
+                    Name = formCreado.Name,
                 };
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error al crear nuevo rol: {RolNombre}", RolDto?.Name ?? "null");
-                throw new ExternalServiceException("Base de datos", "Error al crear el rol", ex);
+                _logger.LogError(ex, "Error al crear nuevo formulario: {Name}", FormDto?.Name ?? "null");
+                throw new ExternalServiceException("Base de datos", "Error al crear el formulario", ex);
             }
         }
 
         // Método para validar el DTO
-        private void ValidateRol(RolDto RolDto)
+        private void ValidateForm(FormDTO FormDto)
         {
-            if (RolDto == null)
+            if (FormDto == null)
             {
-                throw new Utilities.Exceptions.ValidationException("El objeto rol no puede ser nulo");
+                throw new Utilities.Exceptions.ValidationException("El objeto formulario no puede ser nulo");
             }
 
-            if (string.IsNullOrWhiteSpace(RolDto.Name))
+            if (string.IsNullOrWhiteSpace(FormDto.Name))
             {
-                _logger.LogWarning("Se intentó crear/actualizar un rol con Name vacío");
-                throw new Utilities.Exceptions.ValidationException("Name", "El Name del rol es obligatorio");
+                _logger.LogWarning("Se intentó crear/actualizar un formulario con Name vacío");
+                throw new Utilities.Exceptions.ValidationException("Name", "El Name del formulario es obligatorio");
             }
         }
     }

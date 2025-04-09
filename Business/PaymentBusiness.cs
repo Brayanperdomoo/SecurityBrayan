@@ -2,125 +2,126 @@ using Data;
 using Entity.DTO;
 using Entity.Model;
 using Microsoft.Extensions.Logging;
-using System.ComponentModel.DataAnnotations;
 using Utilities.Exceptions;
 
 namespace Business
 {
-    /// <summary>
-    /// Clase de negocio encargada de la lógica relacionada con los roles del sistema.
-    /// </summary>
-    public class RolBusiness
+
+    public class PaymentBusiness
     {
-        private readonly RolData _rolData;
+        private readonly PaymentData _paymentData;
         private readonly ILogger _logger;
 
-        public RolBusiness(RolData rolData, ILogger logger)
+        public PaymentBusiness(PaymentData paymentData, ILogger logger)
         {
-            _rolData = rolData;
+            _paymentData = paymentData;
             _logger = logger;
         }
 
-        // Método para obtener todos los roles como DTOs
-        public async Task<IEnumerable<RolDto>> GetAllRolesAsync()
+        // Método para obtener todos los pagos como DTOs
+        public async Task<IEnumerable<PaymentDTO>> GetAllPaymentsAsync()
         {
             try
             {
-                var roles = await _rolData.GetAllAsync();
-                var rolesDTO = new List<RolDto>();
+                var payments = await _paymentData.GetAllAsync();
+                var paymentsDTO = new List<PaymentDTO>();
 
-                foreach (var rol in roles)
+                foreach (var payment in payments)
                 {
-                    rolesDTO.Add(new RolDto
+                    paymentsDTO.Add(new PaymentDTO
                     {
-                        Id = rol.Id,
-                        Name = rol.Name,
-                        Active = rol.Active // Si existe en la entidad
+                        PaymentId = payment.PaymentId,
+                        PaymentMethod = payment.PaymentMethod,
+                        Amount = payment.Amount,
+                        Activity = payment.Activity
                     });
                 }
 
-                return rolesDTO;
+                return paymentsDTO;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error al obtener todos los roles");
-                throw new ExternalServiceException("Base de datos", "Error al recuperar la lista de roles", ex);
+                _logger.LogError(ex, "Error al obtener todos los pagos");
+                throw new ExternalServiceException("Base de datos", "Error al recuperar la lista de pagos", ex);
             }
         }
 
-        // Método para obtener un rol por ID como DTO
-        public async Task<RolDto> GetRolByIdAsync(int id)
+        // Método para obtener un pago por ID como DTO
+        public async Task<PaymentDTO> GetPaymentByIdAsync(int id)
         {
             if (id <= 0)
             {
-                _logger.LogWarning("Se intentó obtener un rol con ID inválido: {RolId}", id);
-                throw new Utilities.Exceptions.ValidationException("id", "El ID del rol debe ser mayor que cero");
+                _logger.LogWarning("Se intentó obtener un pago con ID inválido: {PaymentId}", id);
+                throw new Utilities.Exceptions.ValidationException("id", "El ID del pago debe ser mayor que cero");
             }
 
             try
             {
-                var rol = await _rolData.GetByIdAsync(id);
-                if (rol == null)
+                var payment = await _paymentData.GetByIdAsync(id);
+                if (payment == null)
                 {
-                    _logger.LogInformation("No se encontró ningún rol con ID: {RolId}", id);
-                    throw new EntityNotFoundException("Rol", id);
+                    _logger.LogInformation("No se encontró ningún pago con ID: {PaymentId}", id);
+                    throw new EntityNotFoundException("Pago", id);
                 }
 
-                return new RolDto
+                return new PaymentDTO
                 {
-                    Id = rol.Id,
-                    Name = rol.Name,
-                    Active = rol.Active
+                    PaymentMethod = payment.PaymentMethod,
+                    Amount = payment.Amount,
+                    Activity = payment.Activity
                 };
             }
+
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error al obtener el rol con ID: {RolId}", id);
-                throw new ExternalServiceException("Base de datos", $"Error al recuperar el rol con ID {id}", ex);
+                _logger.LogError(ex, "Error al obtener el pago con ID: {PaymentId}", id);
+                throw new ExternalServiceException("Base de datos", $"Error al recuperar el pago con ID {id}", ex);
             }
         }
 
-        // Método para crear un rol desde un DTO
-        public async Task<RolDto> CreateRolAsync(RolDto RolDto)
+        // Método para crear un pago desde un DTO
+        public async Task<PaymentDTO> CreatePaymentAsync(PaymentDTO PaymentDto)
         {
             try
             {
-                ValidateRol(RolDto);
+                ValidatePayment(PaymentDto);
 
-                var rol = new Rol
+                var payment = new Payment
                 {
-                    Name = RolDto.Name,
-                    Active = RolDto.Active // Si existe en la entidad
+                    PaymentMethod = PaymentDto.PaymentMethod,
+                    Amount = PaymentDto.Amount,
+                    Activity = PaymentDto.Activity
                 };
 
-                var rolCreado = await _rolData.CreateAsync(rol);
+                var paymentCreado = await _paymentData.CreateAsync(payment);
 
-                return new RolDto
+                return new PaymentDTO
                 {
-                    Id = rolCreado.Id,
-                    Name = rolCreado.Name,
-                    Active = rolCreado.Active // Si existe en la entidad
+                    PaymentId = paymentCreado.PaymentId,
+                    PaymentMethod = paymentCreado.PaymentMethod,
+                    Amount = paymentCreado.Amount,
+                    Activity = paymentCreado.Activity
                 };
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error al crear nuevo rol: {RolNombre}", RolDto?.Name ?? "null");
-                throw new ExternalServiceException("Base de datos", "Error al crear el rol", ex);
+                _logger.LogError(ex, "Error al crear nuevo pago: {Activity}", PaymentDto?.Activity ?? "null");
+                throw new ExternalServiceException("Base de datos", "Error al crear el pago", ex);
             }
         }
 
         // Método para validar el DTO
-        private void ValidateRol(RolDto RolDto)
+        private void ValidatePayment(PaymentDTO PaymentDto)
         {
-            if (RolDto == null)
+            if (PaymentDto == null)
             {
-                throw new Utilities.Exceptions.ValidationException("El objeto rol no puede ser nulo");
+                throw new Utilities.Exceptions.ValidationException("El objeto pago no puede ser nulo");
             }
 
-            if (string.IsNullOrWhiteSpace(RolDto.Name))
+            if (string.IsNullOrWhiteSpace(PaymentDto.Activity))
             {
-                _logger.LogWarning("Se intentó crear/actualizar un rol con Name vacío");
-                throw new Utilities.Exceptions.ValidationException("Name", "El Name del rol es obligatorio");
+                _logger.LogWarning("Se intentó crear/actualizar un pago con Activity vacío");
+                throw new Utilities.Exceptions.ValidationException("Pago", "La Activity del pago es obligatorio");
             }
         }
     }
