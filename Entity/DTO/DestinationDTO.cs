@@ -2,6 +2,8 @@ namespace Entity.DTO
 {
     public class DestinationDTO
     {
+        public int DestinationId;
+
         public string Name { get; set; }
         public string Description { get; set; }
         public string Region { get; set; }
