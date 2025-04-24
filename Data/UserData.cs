@@ -11,13 +11,13 @@ namespace Data
     public class UserData
     {
         private readonly ApplicationDbContext _context;
-        private readonly ILogger _logger;
+        private readonly ILogger<User> _logger;
 
         ///<summary>
         ///Constructor que recibe el contexto de base de datos.
         ///</summary>
         ///<param name="=context">Instancia de <see cref="ApplicationDbContext"/> para la conexión con la base de datos.</param>
-        public UserData(ApplicationDbContext context, ILogger logger)
+        public UserData(ApplicationDbContext context, ILogger<User> logger)
         {
             _context = context;
             _logger = logger;

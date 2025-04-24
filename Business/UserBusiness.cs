@@ -6,53 +6,55 @@ using Utilities.Exceptions;
 
 namespace Business
 {
+        /// <summary>
+    /// Clase de negocio encargada de la lógica relacionada con los roles del sistema.
+    /// </summary>
 
     public class UserBusiness
     {
         private readonly UserData _userData;
-        private readonly ILogger _logger;
+        private readonly ILogger<User> _logger;
 
-        public UserBusiness(UserData userData, ILogger logger)
+        public UserBusiness(UserData userData, ILogger<User> logger)
         {
             _userData = userData;
             _logger = logger;
         }
 
-        // Método para obtener todos los usuarios como DTOs
-        public async Task<IEnumerable<UserDTO>> GetAllUsersAsync()
+        // Método para obtener todos los Users como DTOs
+        public async Task<IEnumerable<UserDTO>> GetAllUserAsync()
         {
             try
             {
                 var users = await _userData.GetAllAsync();
-                var usersDTO = new List<UserDTO>();
+                var userDTO = new List<UserDTO>();
 
                 foreach (var user in users)
                 {
-                    usersDTO.Add(new UserDTO
+                    userDTO.Add(new UserDTO
                     {
                         UserId = user.UserId,
                         Username = user.Username,
-                        Email = user.Email,
-                        Password = user.Password
+                        Description = user.Description
                     });
                 }
-
-                return usersDTO;
+                
+                return userDTO;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error al obtener todos los usuarios");
-                throw new ExternalServiceException("Base de datos", "Error al recuperar la lista de usuarios", ex);
+                _logger.LogError(ex, "Error al obtener todos los users");
+                throw new ExternalServiceException("Base de datos", "Error al recuperar la lista de users", ex);
             }
         }
 
-        // Método para obtener un usuario por ID como DTO
+        // Método para obtener un User por ID como DTO
         public async Task<UserDTO> GetUserByIdAsync(int id)
         {
             if (id <= 0)
             {
-                _logger.LogWarning("Se intentó obtener un usuario con ID inválido: {UserId}", id);
-                throw new Utilities.Exceptions.ValidationException("id", "El ID del usuario debe ser mayor que cero");
+                _logger.LogWarning("Se intentó obtener un rol con ID inválido: {RolId}", id);
+                throw new Utilities.Exceptions.ValidationException("id", "El ID del rol debe ser mayor que cero");
             }
 
             try
@@ -60,28 +62,27 @@ namespace Business
                 var user = await _userData.GetByIdAsync(id);
                 if (user == null)
                 {
-                    _logger.LogInformation("No se encontró ningún usuario con ID: {UserId}", id);
-                    throw new EntityNotFoundException("Usuario", id);
+                    _logger.LogInformation("No se encontró ningún User con ID: {RolId}", id);
+                    throw new EntityNotFoundException("User", id);
                 }
 
                 return new UserDTO
                 {
-                    UserId = user.UserId,
+                    UserId = user.userId,
                     Username = user.Username,
-                    Email = user.Email,
-                    Password = user.Password
+                    Description = user.Description
                 };
             }
 
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error al obtener el usuario con ID: {UserId}", id);
-                throw new ExternalServiceException("Base de datos", $"Error al recuperar el usuario con ID {id}", ex);
+                _logger.LogError(ex, "Error al obtener el rol con ID: {RolId}", id);
+                throw new ExternalServiceException("Base de datos", $"Error al recuperar el rol con ID {id}", ex);
             }
         }
 
-        // Método para crear un usuario desde un DTO
-        public async Task<UserDTO> CreateUserAsync(UserDTO UserDto)
+        // Método para crear un User desde un DTO
+        public async Task<UserDTO> CreateRolAsync(UserDTO UserDto)
         {
             try
             {
@@ -90,8 +91,7 @@ namespace Business
                 var user = new User
                 {
                     Username = UserDto.Username,
-                    Email = UserDto.Email,
-                    Password = UserDto.Password
+                    Description = UserDto.Description
                 };
 
                 var userCreado = await _userData.CreateAsync(user);
@@ -100,29 +100,28 @@ namespace Business
                 {
                     UserId = userCreado.UserId,
                     Username = userCreado.Username,
-                    Email= userCreado.Email,
-                    Password = userCreado.Password
+                    Description = userCreado.Description
                 };
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error al crear nuevo usuario: {Username}", UserDto?.Username ?? "null");
-                throw new ExternalServiceException("Base de datos", "Error al crear el usuario", ex);
+                _logger.LogError(ex, "Error al crear nuevo user: {RolNombre}", UserDto?.Username ?? "null");
+                throw new ExternalServiceException("Base de datos", "Error al crear el User", ex);
             }
         }
 
-        // Método para validar el DTO
+        // Método para validar el User
         private void ValidateUser(UserDTO UserDto)
         {
             if (UserDto == null)
             {
-                throw new Utilities.Exceptions.ValidationException("El objeto usuario no puede ser nulo");
+                throw new Utilities.Exceptions.ValidationException("El objeto User no puede ser nulo");
             }
 
             if (string.IsNullOrWhiteSpace(UserDto.Username))
             {
-                _logger.LogWarning("Se intentó crear/actualizar un usuario con Name vacío");
-                throw new Utilities.Exceptions.ValidationException("Name", "El Name del usuario es obligatorio");
+                _logger.LogWarning("Se intentó crear/actualizar un User con Name vacío");
+                throw new Utilities.Exceptions.ValidationException("Name", "El Name del User es obligatorio");
             }
         }
     }

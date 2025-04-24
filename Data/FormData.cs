@@ -11,13 +11,13 @@ namespace Data
     public class FormData
     {
         private readonly ApplicationDbContext _context;
-        private readonly ILogger _logger;
+        private readonly ILogger<Form> _logger;
 
         ///<summary>
         ///Constructor que recibe el contexto de base de datos.
         ///</summary>
         ///<param name="=context">Instancia de <see cref="ApplicationDbContext"/> para la conexión con la base de datos.</param>
-        public FormData(ApplicationDbContext context, ILogger logger)
+        public FormData(ApplicationDbContext context, ILogger<Form> logger)
         {
             _context = context;
             _logger = logger;

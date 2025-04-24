@@ -10,9 +10,9 @@ namespace Business
     public class ActivityBusiness
     {
         private readonly ActivityData _activityData;
-        private readonly ILogger _logger;
+        private readonly ILogger<Activity> _logger;
 
-        public ActivityBusiness(ActivityData activityData, ILogger logger)
+        public ActivityBusiness(ActivityData activityData, ILogger<Activity> logger)
         {
             _activityData = activityData;
             _logger = logger;
@@ -23,7 +23,7 @@ namespace Business
         {
             try
             {
-                var activitys  = await _activityData.GetAllAsync();
+                var activitys = await _activityData.GetAllAsync();
                 var activitysDTO = new List<ActivityDTO>();
 
                 foreach (var activity in activitys)

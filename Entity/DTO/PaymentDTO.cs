@@ -4,10 +4,13 @@ namespace Entity.DTO
 {
     public class PaymentDTO
     {
-        public int PaymentId { get; set; }
+        public string PaymentName { get; set; }
+        public int PaymentId{ get; set; }
         public string PaymentMethod { get; set; }
-        public decimal Amount { get; set; }
+        public decimal PaymentAmount { get; set; }
         public string Activity { get; set; }
+        public string Description { get; set; }
+
     }
 }
 

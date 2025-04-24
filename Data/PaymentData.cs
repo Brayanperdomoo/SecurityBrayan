@@ -11,13 +11,13 @@ namespace Data
     public class PaymentData
     {
         private readonly ApplicationDbContext _context;
-        private readonly ILogger _logger;
+        private readonly ILogger<Payment> _logger;
 
         ///<summary>
         ///Constructor que recibe el contexto de base de datos.
         ///</summary>
         ///<param name="=context">Instancia de <see cref="ApplicationDbContext"/> para la conexión con la base de datos.</param>
-        public PaymentData(ApplicationDbContext context, ILogger logger)
+        public PaymentData(ApplicationDbContext context, ILogger<Payment> logger)
         {
             _context = context;
             _logger = logger;

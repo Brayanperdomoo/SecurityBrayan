@@ -11,13 +11,13 @@ namespace Data
     public class DestinationData
     {
         private readonly ApplicationDbContext _context;
-        private readonly ILogger _logger;
+        private readonly ILogger<Destination> _logger;
 
         ///<summary>
         ///Constructor que recibe el contexto de base de datos.
         ///</summary>
         ///<param name="=context">Instancia de <see cref="ApplicationDbContext"/> para la conexión con la base de datos.</param>
-        public DestinationData(ApplicationDbContext context, ILogger logger)
+        public DestinationData(ApplicationDbContext context, ILogger<Destination> logger)
         {
             _context = context;
             _logger = logger;

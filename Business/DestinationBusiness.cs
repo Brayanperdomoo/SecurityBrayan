@@ -11,15 +11,15 @@ namespace Business
     public class DestinationBusiness
     {
         private readonly DestinationData _destinationData;
-        private readonly ILogger _logger;
+        private readonly ILogger<Destination> _logger;
 
-        public DestinationBusiness(DestinationData destinationData, ILogger logger)
+        public DestinationBusiness(DestinationData destinationData, ILogger<Destination> logger)
         {
             _destinationData = destinationData;
             _logger = logger;
         }
 
-        // Método para obtener todos los destinos como DTOs
+        // Método para obtener todos los destinos comoo DTOs
         public async Task<IEnumerable<DestinationDTO>> GetAllDestinationsAsync()
         {
             try
