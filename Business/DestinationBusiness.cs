@@ -2,7 +2,6 @@ using Data;
 using Entity.DTO;
 using Entity.Model;
 using Microsoft.Extensions.Logging;
-using Microsoft.SqlServer.Server;
 using Utilities.Exceptions;
 
 namespace Business
@@ -19,7 +18,7 @@ namespace Business
             _logger = logger;
         }
 
-        // Método para obtener todos los destinos comoo DTOs
+        // Método para obtener todos los destinos como DTOs
         public async Task<IEnumerable<DestinationDTO>> GetAllDestinationsAsync()
         {
             try
@@ -32,7 +31,11 @@ namespace Business
                     destinationsDTO.Add(new DestinationDTO
                     {
                         DestinationId = destination.DestinationId,
-                        Name = destination.Name
+                        Name = destination.Name,
+                        Description = destination.Description,
+                        Region = destination.Region,
+                        Latitude = destination.Latitude,
+                        Longitude = destination.Longitude
                     });
                 }
 
@@ -67,6 +70,10 @@ namespace Business
                 {
                     DestinationId = destination.DestinationId,
                     Name = destination.Name,
+                    Description = destination.Description,
+                    Region = destination.Region,
+                    Latitude = destination.Latitude,
+                    Longitude = destination.Longitude
                 };
             }
 
@@ -87,6 +94,10 @@ namespace Business
                 var destination = new Destination
                 {
                     Name = DestinationDto.Name,
+                    Description = DestinationDto.Description,
+                    Region = DestinationDto.Region,
+                    Latitude = DestinationDto.Latitude,
+                    Longitude = DestinationDto.Longitude
                 };
 
                 var destinationCreado = await _destinationData.CreateAsync(destination);
@@ -116,6 +127,152 @@ namespace Business
             {
                 _logger.LogWarning("Se intentó crear/actualizar un destino con Name vacío");
                 throw new Utilities.Exceptions.ValidationException("Name", "El Name del destino es obligatorio");
+            }
+        }
+
+        // Método para actualizar el destino desde un DTO
+        public async Task<DestinationDTO?> UpdateRolAsync(DestinationDTO destinationDto)
+        {
+            try
+            {
+                ValidateDestination(destinationDto);
+
+                var destinationExistente = await _destinationData.GetByIdAsync(destinationDto.DestinationId);
+
+                if (destinationExistente == null)
+                {
+                    return null; // El controlador se encarga de devolver NotFound
+                }
+
+                destinationExistente.Name = destinationDto.Name;
+                destinationExistente.Description = destinationDto.Description;
+
+                var destinationActualizado = await _destinationData.UpdateDestinationAsync(destinationExistente);
+
+                return new DestinationDTO
+                {
+                    DestinationId = destinationActualizado.DestinationId,
+                    Name = destinationActualizado.Name,
+                    Description = destinationActualizado.Description
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al actualizar destino: {DestinationId}", destinationDto?.DestinationId ?? 0);
+                throw new ExternalServiceException("Base de datos", "Error al actualizar el destino", ex);
+            }
+        }
+
+        // Método para eliminar un destino desde el DTO
+        public async Task<bool> DeleteDestinationAsync(int id)
+        {
+            try
+            {
+                var destinationExistente = await _destinationData.GetByIdAsync(id);
+
+                if (destinationExistente == null)
+                {
+                    return false;
+                }
+
+                var result = await _destinationData.DeleteAsync(id);
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al eliminar destino con ID: {DestinationId}", id);
+                throw new ExternalServiceException("Base de datos", $"Error al eliminar el destino con ID {id}", ex);
+            }
+        }
+
+        // Elimina lógicamente un destino (soft delete).
+        public async Task<bool> SoftDeleteDestinationAsync(int id)
+        {
+            if (id <= 0)
+            {
+                _logger.LogWarning("Se intentó eliminar lógicamente un destino con ID inválido: {DestinationId}", id);
+                throw new Utilities.Exceptions.ValidationException("id", "El ID del destino debe ser mayor que cero");
+            }
+
+            try
+            {
+                var result = await _destinationData.SoftDeleteAsync(id);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al realizar el eliminado lógico del destino con ID: {DestinationId}", id);
+                throw new ExternalServiceException("Base de datos", "Error al eliminar lógicamente el destino", ex);
+            }
+        }
+
+        // Restaura un destino eliminado lógicamente.
+        public async Task<bool> RestoreDestinationAsync(int id)
+        {
+            if (id <= 0)
+            {
+                _logger.LogWarning("Se intentó restaurar un destino con ID inválido: {DestinationId}", id);
+                throw new Utilities.Exceptions.ValidationException("id", "El ID del rol debe ser mayor que cero");
+            }
+
+            try
+            {
+                var result = await _destinationData.RestoreAsync(id);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al restaurar el destino con ID: {DestinationId}", id);
+                throw new ExternalServiceException("Base de datos", "Error al restaurar el destino", ex);
+            }
+        }
+
+        //Método para actualizar parcialmente los campos de un destino.
+
+        public async Task<DestinationDTO?> PartialUpdateDestinationAsync(int id, DestinationDTO destinationDto)
+        {
+            try
+            {
+                var existingDestination = await _destinationData.GetByIdAsync(id);
+
+                if (existingDestination == null)
+                {
+                    return null;
+                }
+
+                // Solo actualizamos los campos que vienen no nulos o no vacíos
+                if (!string.IsNullOrWhiteSpace(destinationDto.Name))
+                    existingDestination.Name = destinationDto.Name;
+
+                if (!string.IsNullOrWhiteSpace(destinationDto.Description))
+                    existingDestination.Description = destinationDto.Description;
+
+                if (!string.IsNullOrWhiteSpace(destinationDto.Region))
+                    existingDestination.Region = destinationDto.Region;
+
+                if (destinationDto.Longitude != 0)
+                    existingDestination.Latitude = destinationDto.Latitude;
+
+                if (destinationDto.Longitude != 0)
+                    existingDestination.Description = destinationDto.Description;
+
+
+                var updatedRol = await _destinationData.UpdateDestinationAsync(existingDestination);
+
+                return new DestinationDTO
+                {
+                    DestinationId = updatedRol.DestinationId,
+                    Name = updatedRol.Name,
+                    Description = updatedRol.Description,
+                    Latitude = updatedRol.Latitude,
+                    Longitude = updatedRol.Longitude
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al actualizar parcialmente el destino con ID: {DestinationId}", id);
+                throw new ExternalServiceException("Base de datos", $"Error al actualizar parcialmente el destino con ID {id}", ex);
             }
         }
     }
