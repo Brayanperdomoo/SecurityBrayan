@@ -22,16 +22,16 @@ namespace Business
         }
 
         // Método para obtener todos los Person como DTOs
-        public async Task<IEnumerable<PersonDto>> GetAllPersonAsync()
+        public async Task<IEnumerable<PersonDTO>> GetAllPersonAsync()
         {
             try
             {
                 var persons = await _personData.GetAllAsync();
-                var personDTOs = new List<PersonDto>();
+                var personDTOs = new List<PersonDTO>();
 
                 foreach (var person in persons)
                 {
-                    personDTOs.Add(new PersonDto
+                    personDTOs.Add(new PersonDTO
                     {
                         PersonsId = person.PersonId,
                         LastName = person.LastName,
@@ -49,7 +49,7 @@ namespace Business
         }
 
         // Método para obtener un persons por ID como DTO
-        public async Task<PersonDto> GetPersonByIdAsync(int id)
+        public async Task<PersonDTO> GetPersonByIdAsync(int id)
         {
             if (id <= 0)
             {
@@ -66,7 +66,7 @@ namespace Business
                     throw new EntityNotFoundException("Person", id);
                 }
 
-                return new PersonDto
+                return new PersonDTO
                 {
                         PersonsId = person.PersonId,
                         LastName = person.LastName,
@@ -82,7 +82,7 @@ namespace Business
         }
 
         // Método para crear un Person desde un DTO
-        public async Task<PersonDto> CreatePersonAsync(PersonDto PersonDto)
+        public async Task<PersonDTO> CreatePersonAsync(PersonDTO PersonDto)
         {
             try
             {
@@ -97,7 +97,7 @@ namespace Business
 
                 var personCreado = await _personData.CreateAsync(person);
 
-                return new PersonDto
+                return new PersonDTO
                 {
                     PersonsId = personCreado.PersonId,
                     LastName = personCreado.LastName,
@@ -112,7 +112,7 @@ namespace Business
         }
 
         // Método para validar el Persons
-        private void ValidatPerson(PersonDto PersonDto)
+        private void ValidatPerson(PersonDTO PersonDto)
         {
             if (PersonDto == null)
             {
