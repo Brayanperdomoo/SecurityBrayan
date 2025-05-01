@@ -105,6 +105,169 @@ namespace Web.Controllers
                 _logger.LogError(ex, "Error al crear actividad");
                 return StatusCode(500, new { message = ex.Message });
             }
+        }
+
+
+        /// <summary>
+        /// Actualiza los datos de una actividad existente
+        /// </summary>
+        [HttpPut("{id}")]
+        [ProducesResponseType(typeof(ActivityDTO), 200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        [ProducesResponseType(500)]
+        public async Task<IActionResult> UpdateActivity(int id, [FromBody] ActivityDTO activityDto)
+        {
+            // Forzar que el ID en el DTO sea el mismo que el de la URL
+            activityDto.ActivityId = id;
+
+            try
+            {
+                var updatedActivity = await _ActivityBusiness.UpdateActivityAsync(activityDto);
+
+                if (updatedActivity == null)
+                {
+                    return NotFound(new { message = $"No se encontró una actividad con ID {id}" });
+                }
+
+                return Ok(updatedActivity);
+            }
+            catch (ValidationException ex)
+            {
+                _logger.LogWarning(ex, "Validación fallida al actualizar actividad");
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (ExternalServiceException ex)
+            {
+                _logger.LogError(ex, "Error al actualizar adctividad");
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Elimina una actividad de la base de datos.
+        /// </summary>
+        [HttpDelete("{id}")]
+        [ProducesResponseType(typeof(string), 200)]
+        [ProducesResponseType(404)]
+        [ProducesResponseType(500)]
+        public async Task<IActionResult> DeleteActivity(int id)
+        {
+            try
+            {
+                var isDeleted = await _ActivityBusiness.DeleteActivityAsync(id);
+
+                if (!isDeleted)
+                {
+                    return NotFound(new { message = $"No se encontró una actividad con ID {id}" });
+                }
+
+                return Ok(new { message = "Actividad eliminada correctamente" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al eliminar actividad con ID: {RolId}", id);
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Elimina lógicamente una actividad del sistema
+        /// </summary>
+        [HttpDelete("softdelete/{id}")]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        [ProducesResponseType(500)]
+        public async Task<IActionResult> SoftDeleteActivity(int id)
+        {
+            try
+            {
+                var result = await _ActivityBusiness.SoftDeleteActivityAsync(id);
+
+                if (!result)
+                {
+                    return NotFound(new { message = $"No se encontró una actividad con ID {id}" });
+                }
+
+                return NoContent(); // Eliminado lógico exitoso
+            }
+            catch (ValidationException ex)
+            {
+                _logger.LogWarning(ex, "Validación fallida al intentar eliminar lógicamente actividad");
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (ExternalServiceException ex)
+            {
+                _logger.LogError(ex, "Error al eliminar lógicamente actividad");
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Restaura una actividad eliminada lógicamente.
+        /// </summary>
+        [HttpPatch("restore/{id}")]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        [ProducesResponseType(500)]
+        public async Task<IActionResult> RestoreActivity(int id)
+        {
+            try
+            {
+                var result = await _ActivityBusiness.RestoreActivityAsync(id);
+
+                if (!result)
+                {
+                    return NotFound(new { message = $"No se encontró una actividad con ID {id}" });
+                }
+
+                return Ok(new { message = $"Actividad restaurada correctamente" });
+            }
+            catch (ValidationException ex)
+            {
+                _logger.LogWarning(ex, "Validación fallida al intentar restaurar actividad");
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (ExternalServiceException ex)
+            {
+                _logger.LogError(ex, "Error al restaurar actividad");
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Actualiza parcialmente los datos de una actividad existente.
+        /// </summary>
+        [HttpPatch("{id}")]
+        [ProducesResponseType(typeof(ActivityDTO), 200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        [ProducesResponseType(500)]
+        public async Task<IActionResult> PartialUpdateRol(int id, [FromBody] ActivityDTO activityDto)
+        {
+            try
+            {
+                var updatedActivity = await _ActivityBusiness.PartialUpdateActivityAsync(id, activityDto);
+
+                if (updatedActivity == null)
+                {
+                    return NotFound(new { message = $"No se encontró un usuario con ID {id}" });
+                }
+
+                return Ok(updatedActivity);
+            }
+            catch (ValidationException ex)
+            {
+                _logger.LogWarning(ex, "Validación fallida al modificar parte del usuario");
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (ExternalServiceException ex)
+            {
+                _logger.LogError(ex, "Error al modificar parte del usuario");
+                return StatusCode(500, new { message = ex.Message });
             }
         }
     }
+}

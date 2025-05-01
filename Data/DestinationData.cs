@@ -85,6 +85,32 @@ namespace Data
             }
         }
 
+        /// <summary>
+        /// Realiza un eliminado lógico del destino (marca el campo DeleteAt).
+        /// </summary>
+        /// <param name="id">ID del usuario a eliminar lógicamente.</param>
+        /// <returns>True si la operación fue exitosa, False si no se encontró el usuario.</returns>
+        public async Task<bool> SoftDeleteAsync(int id)
+        {
+            try
+            {
+                var destination = await _context.Set<Destination>().FindAsync(id);
+                if (destination == null)
+                    return false;
+
+                destination.DeleteAt = DateTime.UtcNow;
+                _context.Set<Destination>().Update(destination);
+
+                await _context.SaveChangesAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al realizar el eliminado lógico del destino con ID {DestinationId}", id);
+                return false;
+            }
+        }
+
         ///<summary>
         ///Elimina un rol de la base de datos.
         ///</summary>
@@ -106,6 +132,72 @@ namespace Data
             {
                 Console.WriteLine($"Error al eliminar destino: {ex.Message}");
                 return false;
+            }
+        }
+
+        /// <summary>
+        /// Actualiza un destino existente en la base de datos.
+        /// </summary>
+        /// <param name="destination">Instancia del destino con datos actualizados.</param>
+        /// <returns>El destino actualizado.</returns>
+        public async Task<Destination> UpdateDestinationAsync(Destination destination)
+        {
+            try
+            {
+                _context.Set<Destination>().Update(destination);
+                await _context.SaveChangesAsync();
+                return destination;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error al actualizar el destino: {ex.Message}");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Restaura un destino eliminado lógicamente (pone DeleteAt en null).
+        /// </summary>
+        /// <param name="id">ID del destino a restaurar.</param>
+        /// <returns>True si la operación fue exitosa, False si no se encontró el destino.</returns>
+        public async Task<bool> RestoreAsync(int id)
+        {
+            try
+            {
+                var destination = await _context.Set<Destination>().FindAsync(id);
+                if (destination == null)
+                    return false;
+
+                destination.DeleteAt = null;
+                _context.Set<Destination>().Update(destination);
+
+                await _context.SaveChangesAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al restaurar el destino con ID {DestinationId}", id);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Actualiza un destino existente en la base de datos.
+        /// </summary>
+        /// <param name="destination">Instancia del destino con datos actualizados.</param>
+        /// <returns>El destino actualizado.</returns>
+        public async Task<Destination> UpdateUserAsync(Destination destination)
+        {
+            try
+            {
+                _context.Set<Destination>().Update(destination);
+                await _context.SaveChangesAsync();
+                return destination;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error al actualizar el destino: {ex.Message}");
+                throw;
             }
         }
     }

@@ -22,7 +22,7 @@ namespace Business
         }
 
         // Método para obtener todos los Permission como DTOs
-        public async Task<IEnumerable<PermissionDTO>> GetAllPermissionAsync()
+        public async Task<IEnumerable<PermissionDTO>> GetAllPermissionsAsync()
         {
             try
             {
@@ -33,7 +33,7 @@ namespace Business
                 {
                     permissionDTOs.Add(new PermissionDTO
                     {
-                        permissionId = permission.PermissionId,
+                        PermissionId = permission.PermissionId,
                         PermissionName = permission.PermissionName,
                         Description = permission.Description
                     });
@@ -68,7 +68,7 @@ namespace Business
 
                 return new PermissionDTO
                 {
-                    permissionId = permission.PermissionId,
+                    PermissionId = permission.PermissionId,
                     PermissionName = permission.PermissionName,
                     Description = permission.Description
                 };
@@ -90,7 +90,7 @@ namespace Business
 
                 var permission = new Permission
                 {
-                    PermissionId = PermissionDTO.permissionId,
+                    PermissionId = PermissionDTO.PermissionId,
                     PermissionName = PermissionDTO.PermissionName,
                     Description = PermissionDTO.Description
                 };
@@ -99,7 +99,7 @@ namespace Business
 
                 return new PermissionDTO
                 {
-                    permissionId = createdPermission.PermissionId,
+                    PermissionId = createdPermission.PermissionId,
                     PermissionName = createdPermission.PermissionName,
                     Description = createdPermission.Description
                 };

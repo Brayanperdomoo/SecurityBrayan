@@ -22,7 +22,7 @@ namespace Business
         }
 
         // Método para obtener todos los Users como DTOs
-        public async Task<IEnumerable<UserDTO>> GetAllUserAsync()
+        public async Task<IEnumerable<UserDTO>> GetAllUsersAsync()
         {
             try
             {
@@ -82,7 +82,7 @@ namespace Business
         }
 
         // Método para crear un User desde un DTO
-        public async Task<UserDTO> CreateRolAsync(UserDTO UserDto)
+        public async Task<UserDTO> CreateUserAsync(UserDTO UserDto)
         {
             try
             {

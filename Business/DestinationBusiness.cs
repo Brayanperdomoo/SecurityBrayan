@@ -33,6 +33,7 @@ namespace Business
                         DestinationId = destination.DestinationId,
                         Name = destination.Name,
                         Description = destination.Description,
+                        Country = destination.Country,
                         Region = destination.Region,
                         Latitude = destination.Latitude,
                         Longitude = destination.Longitude
@@ -71,6 +72,7 @@ namespace Business
                     DestinationId = destination.DestinationId,
                     Name = destination.Name,
                     Description = destination.Description,
+                    Country = destination.Country,
                     Region = destination.Region,
                     Latitude = destination.Latitude,
                     Longitude = destination.Longitude
@@ -95,6 +97,7 @@ namespace Business
                 {
                     Name = DestinationDto.Name,
                     Description = DestinationDto.Description,
+                    Country = DestinationDto.Country,
                     Region = DestinationDto.Region,
                     Latitude = DestinationDto.Latitude,
                     Longitude = DestinationDto.Longitude
@@ -106,6 +109,11 @@ namespace Business
                 {
                     DestinationId = destinationCreado.DestinationId,
                     Name = destinationCreado.Name,
+                    Description = destinationCreado.Description,
+                    Country = destinationCreado.Country,
+                    Region = destinationCreado.Region,
+                    Latitude = destinationCreado.Latitude,
+                    Longitude = destinationCreado.Longitude
                 };
             }
             catch (Exception ex)
@@ -131,7 +139,7 @@ namespace Business
         }
 
         // Método para actualizar el destino desde un DTO
-        public async Task<DestinationDTO?> UpdateRolAsync(DestinationDTO destinationDto)
+        public async Task<DestinationDTO?> UpdateDestinationAsync(DestinationDTO destinationDto)
         {
             try
             {
@@ -146,6 +154,11 @@ namespace Business
 
                 destinationExistente.Name = destinationDto.Name;
                 destinationExistente.Description = destinationDto.Description;
+                destinationExistente.Country = destinationDto.Country;
+                destinationExistente.Region = destinationDto.Region;
+                destinationExistente.Latitude = destinationDto.Latitude;
+                destinationExistente.Longitude = destinationDto.Longitude;
+
 
                 var destinationActualizado = await _destinationData.UpdateDestinationAsync(destinationExistente);
 
@@ -153,7 +166,11 @@ namespace Business
                 {
                     DestinationId = destinationActualizado.DestinationId,
                     Name = destinationActualizado.Name,
-                    Description = destinationActualizado.Description
+                    Description = destinationActualizado.Description,
+                    Country = destinationActualizado.Country,
+                    Region = destinationActualizado.Region,
+                    Latitude = destinationActualizado.Latitude,
+                    Longitude = destinationActualizado.Longitude
                 };
             }
             catch (Exception ex)
@@ -248,25 +265,33 @@ namespace Business
                 if (!string.IsNullOrWhiteSpace(destinationDto.Description))
                     existingDestination.Description = destinationDto.Description;
 
+                if (!string.IsNullOrWhiteSpace(destinationDto.Country))
+                    existingDestination.Country = destinationDto.Country;
+
                 if (!string.IsNullOrWhiteSpace(destinationDto.Region))
                     existingDestination.Region = destinationDto.Region;
 
-                if (destinationDto.Longitude != 0)
+                if (destinationDto.Latitude > 0)
                     existingDestination.Latitude = destinationDto.Latitude;
 
-                if (destinationDto.Longitude != 0)
-                    existingDestination.Description = destinationDto.Description;
+                if (destinationDto.Longitude < 0)
+                    existingDestination.Longitude = destinationDto.Longitude;
+
+                if (destinationDto.Longitude > 0)
+                    existingDestination.Longitude = destinationDto.Longitude;
 
 
-                var updatedRol = await _destinationData.UpdateDestinationAsync(existingDestination);
+                var updatedDestination = await _destinationData.UpdateDestinationAsync(existingDestination);
 
                 return new DestinationDTO
                 {
-                    DestinationId = updatedRol.DestinationId,
-                    Name = updatedRol.Name,
-                    Description = updatedRol.Description,
-                    Latitude = updatedRol.Latitude,
-                    Longitude = updatedRol.Longitude
+                    DestinationId = updatedDestination.DestinationId,
+                    Name = updatedDestination.Name,
+                    Description = updatedDestination.Description,
+                    Country = updatedDestination.Country,
+                    Region = updatedDestination.Region,
+                    Latitude = updatedDestination.Latitude,
+                    Longitude = updatedDestination.Longitude
                 };
             }
             catch (Exception ex)

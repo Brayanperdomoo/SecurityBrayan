@@ -4,6 +4,7 @@ namespace Entity.DTO
 {
     public class PersonDTO
     {
+        public string PersonId { get; set; }
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public int Document { get; set; }

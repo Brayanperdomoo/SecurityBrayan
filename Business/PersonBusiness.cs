@@ -22,7 +22,7 @@ namespace Business
         }
 
         // Método para obtener todos los Person como DTOs
-        public async Task<IEnumerable<PersonDTO>> GetAllPersonAsync()
+        public async Task<IEnumerable<PersonDTO>> GetAllPersonsAsync()
         {
             try
             {

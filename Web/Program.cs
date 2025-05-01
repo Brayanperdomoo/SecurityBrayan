@@ -2,7 +2,6 @@ using Business;
 using Data;
 using Entity.Context;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Migrations;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -59,11 +58,17 @@ builder.Services.AddCors(opciones =>
     });
 });
 
-// Agregar DbContext
+// Agregar DbContext con MySQL (usando Pomelo)
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<ApplicationDbContext>(opciones =>
-    opciones.UseSqlServer("name=DefaultConnection"));
-
+    opciones.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
+        
 var app = builder.Build();
+
+// Agregar DbContext
+//builder.Services.AddDbContext<ApplicationDbContext>(opciones =>
+//    opciones.UseSqlServer("name=DefaultConnection"));
+
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -73,6 +78,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseCors();
 app.UseAuthorization();
 app.MapControllers();
 app.Run();

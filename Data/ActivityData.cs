@@ -85,6 +85,32 @@ namespace Data
             }
         }
 
+        /// <summary>
+        /// Realiza un eliminado lógico de la actvididad (marca el campo DeleteAt).
+        /// </summary>
+        /// <param name="id">ID de la actividad a eliminar lógicamente.</param>
+        /// <returns>True si la operación fue exitosa, False si no se encontró la actividad.</returns>
+        public async Task<bool> SoftDeleteAsync(int id)
+        {
+            try
+            {
+                var activity = await _context.Set<Activity>().FindAsync(id);
+                if (activity == null)
+                    return false;
+
+                activity.DeleteAt = DateTime.UtcNow;
+                _context.Set<Activity>().Update(activity);
+
+                await _context.SaveChangesAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al realizar el eliminado lógico del rol con ID {RolId}", id);
+                return false;
+            }
+        }
+
         ///<summary>
         ///Elimina un rol de la base de datos.
         ///</summary>
@@ -105,6 +131,53 @@ namespace Data
             catch (Exception ex)
             {
                 Console.WriteLine($"Error al eliminar actividad: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Actualiza una actividad existente en la base de datos.
+        /// </summary>
+        /// <param name="rol">Instancia de la actividad con datos actualizados.</param>
+        /// <returns>La actividad actualizada.</returns>
+        public async Task<Activity> UpdateActivityAsync(Activity activity)
+        {
+            try
+            {
+                _context.Set<Activity>().Update(activity);
+                await _context.SaveChangesAsync();
+                return activity;
+            }
+            catch (Exception ex)
+
+            {
+                _logger.LogError($"Error al actualizar la actividad: {ex.Message}");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Restaura una actividad eliminada lógicamente (pone DeleteAt en null).
+        /// </summary>
+        /// <param name="id">ID del rol a restaurar.</param>
+        /// <returns>True si la operación fue exitosa, False si no se encontró el rol.</returns>
+        public async Task<bool> RestoreAsync(int id)
+        {
+            try
+            {
+                var activity = await _context.Set<Activity>().FindAsync(id);
+                if (activity == null)
+                    return false;
+
+                activity.DeleteAt = null;
+                _context.Set<Activity>().Update(activity);
+
+                await _context.SaveChangesAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al restaurar la actividad con ID {ActivityId}", id);
                 return false;
             }
         }

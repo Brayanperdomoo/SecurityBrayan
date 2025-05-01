@@ -1,10 +1,14 @@
-﻿using Dapper;
+﻿
+using Dapper;
+using Entity.Model;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Configuration;
 using System.Data;
 using System.Reflection;
 using System.Reflection.Emit;
+using Module = Entity.Model.Module;
+
 
 namespace Entity.Context
 {
@@ -30,17 +34,26 @@ namespace Entity.Context
             _configuration = configuration;
         }
 
-        /// <summary>
-        /// Configura los modelos de la base de datos aplicando configuraciones desde ensamblados.
-        /// </summary>
-        /// <param name="modelBuilder">Constructor del modelo de base de datos.</param>
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
-        {
-            base.OnModelCreating(modelBuilder);
-            modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
+        ///DB SETS
+        public DbSet<Rol> Rol { get; set; }
+        public DbSet<User> User { get; set; }
+        public DbSet<Person> Person { get; set; }
+        public DbSet<Form> Form { get; set; }
+        public DbSet<Module> Module { get; set; }
+        public DbSet<Activity> Activity { get; set; }
+        public DbSet<ChangeLog> ChangeLog { get; set; }
+        public DbSet<Destination> Destination { get; set; }
+        public DbSet<DestinationActivity> DestinationActivity { get; set; }
+        public DbSet<FormModule> FormModule { get; set; }
+        public DbSet<Payment> Payment { get; set; }
+        public DbSet<Permission> Permission { get; set; }
+        public DbSet<RolFormPermission> RolFormPermission { get; set; }
+        public DbSet<RolPermission> RolPermission { get; set; }
+        public DbSet<UserActivity> UserActivity { get; set; }
+        public DbSet<UserRol> UserRol { get; set; }
 
-            base.OnModelCreating(modelBuilder);
-        }
+
+
 
         /// <summary>
         /// Configura opciones adicionales del contexto, como el registro de datos sensibles.
@@ -92,7 +105,7 @@ namespace Entity.Context
         /// <param name="timeout">Tiempo de espera opcional para la consulta.</param>
         /// <param name="type">Tipo opcional de comando SQL.</param>
         /// <returns>Una colección de objetos del tipo especificado.</returns>
-        public async Task<IEnumerable<T>> QueryAsync<T>(string text, object parameters = null, int? timeout = null, CommandType? type = null)
+        public async Task<IEnumerable<T>> QueryAsync<T>(string text, object? parameters = null, int? timeout = null, CommandType? type = null)
         {
             using var command = new DapperEFCoreCommand(this, text, parameters, timeout, type, CancellationToken.None);
             var connection = this.Database.GetDbConnection();
