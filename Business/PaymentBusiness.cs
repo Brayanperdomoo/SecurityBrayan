@@ -6,82 +6,80 @@ using Utilities.Exceptions;
 
 namespace Business
 {
-    /// <summary>
-    /// Clase de negocio encargada de la lógica relacionada con los roles del sistema.
-    /// </summary>
 
     public class PaymentBusiness
     {
-        private readonly PaymentData _PaymentData;
+        private readonly PaymentData _paymentData;
         private readonly ILogger<Payment> _logger;
 
-        public PaymentBusiness(PaymentData PaymentData, ILogger<Payment> logger)
+        public PaymentBusiness(PaymentData paymentData, ILogger<Payment> logger)
         {
-            _PaymentData = PaymentData;
+            _paymentData = paymentData;
             _logger = logger;
         }
 
-        // Método para obtener todos los Payment como DTOs
+        // Método para obtener todos los pagos como DTOs
         public async Task<IEnumerable<PaymentDTO>> GetAllPaymentsAsync()
         {
             try
             {
-                var Payments = await _PaymentData.GetAllAsync();
-                var PaymentsDTO = new List<PaymentDTO>();
+                var payments = await _paymentData.GetAllAsync();
+                var paymentsDTO = new List<PaymentDTO>();
 
-                foreach (var payment in Payments)
+                foreach (var payment in payments)
                 {
-                    PaymentsDTO.Add(new PaymentDTO
+                    paymentsDTO.Add(new PaymentDTO
                     {
                         PaymentId = payment.PaymentId,
                         PaymentMethod = payment.PaymentMethod,
-                        Description = payment.Description
+                        Amount = payment.Amount,
+                        Activity = payment.Activity
                     });
                 }
 
-                return PaymentsDTO;
+                return paymentsDTO;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error al obtener todos los Payment");
-                throw new ExternalServiceException("Base de datos", "Error al recuperar la lista de Payment", ex);
+                _logger.LogError(ex, "Error al obtener todos los pagos");
+                throw new ExternalServiceException("Base de datos", "Error al recuperar la lista de pagos", ex);
             }
         }
 
-        // Método para obtener un User por ID como DTO
+        // Método para obtener un pago por ID como DTO
         public async Task<PaymentDTO> GetPaymentByIdAsync(int id)
         {
             if (id <= 0)
             {
-                _logger.LogWarning("Se intentó obtener un Payment con ID inválido: {RolId}", id);
-                throw new Utilities.Exceptions.ValidationException("id", "El ID del Payment debe ser mayor que cero");
+                _logger.LogWarning("Se intentó obtener un pago con ID inválido: {PaymentId}", id);
+                throw new Utilities.Exceptions.ValidationException("id", "El ID del pago debe ser mayor que cero");
             }
 
             try
             {
-                var payment = await _PaymentData.GetByIdAsync(id);
+                var payment = await _paymentData.GetByIdAsync(id);
                 if (payment == null)
                 {
-                    _logger.LogInformation("No se encontró ningún Payment con ID: {PaymentId}", id);
-                    throw new EntityNotFoundException("User", id);
+                    _logger.LogInformation("No se encontró ningún pago con ID: {PaymentId}", id);
+                    throw new EntityNotFoundException("Pago", id);
                 }
 
                 return new PaymentDTO
                 {
-                    PaymentId = payment.PaymentId,
                     PaymentMethod = payment.PaymentMethod,
-                    PaymentAmount = payment.PaymentAmount
+                    Amount = payment.Amount,
+                    Activity = payment.Activity
                 };
             }
 
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error al obtener el payment con ID: {PaymentId}", id);
-                throw new ExternalServiceException("Base de datos", $"Error al recuperar el payment con ID {id}", ex);
+                _logger.LogError(ex, "Error al obtener el pago con ID: {PaymentId}", id);
+                throw new ExternalServiceException("Base de datos", $"Error al recuperar el pago con ID {id}", ex);
             }
         }
 
-        // Método para crear un payment desde un DTO
+        // Método para crear un pago desde un DTO
         public async Task<PaymentDTO> CreatePaymentAsync(PaymentDTO PaymentDto)
         {
             try
@@ -90,39 +88,40 @@ namespace Business
 
                 var payment = new Payment
                 {
-                    PaymentId = PaymentDto.PaymentId,
                     PaymentMethod = PaymentDto.PaymentMethod,
-                    Description = PaymentDto.Description
+                    Amount = PaymentDto.Amount,
+                    Activity = PaymentDto.Activity
                 };
 
-                var paymentCreado = await _PaymentData.CreateAsync(payment);
+                var paymentCreado = await _paymentData.CreateAsync(payment);
 
                 return new PaymentDTO
                 {
                     PaymentId = paymentCreado.PaymentId,
                     PaymentMethod = paymentCreado.PaymentMethod,
-                    Description = paymentCreado.Description
+                    Amount = paymentCreado.Amount,
+                    Activity = paymentCreado.Activity
                 };
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error al crear nuevo Payment: {RolNombre}", PaymentDto?.PaymentName ?? "null");
-                throw new ExternalServiceException("Base de datos", "Error al crear el Payment", ex);
+                _logger.LogError(ex, "Error al crear nuevo pago: {Activity}", PaymentDto?.Activity ?? "null");
+                throw new ExternalServiceException("Base de datos", "Error al crear el pago", ex);
             }
         }
 
-        // Método para validar el Payment
+        // Método para validar el DTO
         private void ValidatePayment(PaymentDTO PaymentDto)
         {
             if (PaymentDto == null)
             {
-                throw new Utilities.Exceptions.ValidationException("El objeto Payment no puede ser nulo");
+                throw new Utilities.Exceptions.ValidationException("El objeto pago no puede ser nulo");
             }
 
-            if (string.IsNullOrWhiteSpace(PaymentDto.PaymentName))
+            if (string.IsNullOrWhiteSpace(PaymentDto.Activity))
             {
-                _logger.LogWarning("Se intentó crear/actualizar un Payment con Name vacío");
-                throw new Utilities.Exceptions.ValidationException("Name", "El Name del Payment es obligatorio");
+                _logger.LogWarning("Se intentó crear/actualizar un pago con Activity vacío");
+                throw new Utilities.Exceptions.ValidationException("Pago", "La Activity del pago es obligatorio");
             }
         }
     }

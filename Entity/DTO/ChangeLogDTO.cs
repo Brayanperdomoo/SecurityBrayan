@@ -13,4 +13,3 @@ namespace Entity.DTO
         public DateTime ChangeDate { get; set; }
     }
 }
-

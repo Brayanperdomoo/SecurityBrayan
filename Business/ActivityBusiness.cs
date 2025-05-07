@@ -1,294 +1,184 @@
-using Data;
-using Entity.DTO;
-using Entity.Model;
 using Microsoft.Extensions.Logging;
-using Utilities.Exceptions;
+using Entity.Model;
+using Entity.Context;
+using Microsoft.EntityFrameworkCore;
 
 namespace Business
 {
-
-    public class ActivityBusiness
+    /// <summary>
+    /// Repositorio encargado de la gestión de la entidad Rol en la base de datos.
+    /// </summary>
+    public class ActivityData
     {
-        private readonly ActivityData _activityData;
+        private readonly ApplicationDbContext _context;
         private readonly ILogger<Activity> _logger;
 
-        public ActivityBusiness(ActivityData activityData, ILogger<Activity> logger)
+        ///<summary>
+        ///Constructor que recibe el contexto de base de datos.
+        ///</summary>
+        ///<param name="=context">Instancia de <see cref="ApplicationDbContext"/> para la conexión con la base de datos.</param>
+        public ActivityData(ApplicationDbContext context, ILogger<Activity> logger)
         {
-            _activityData = activityData;
+            _context = context;
             _logger = logger;
         }
 
-        // Método para obtener todas las actividades como DTOs
-        public async Task<IEnumerable<ActivityDTO>> GetAllActivitysAsync()
+        ///<summary>
+        ///Obtiene todos los roles almacenados en la base de datos.
+        ///</summary>
+        ///<returns>Lista de roles.</returns>
+        public async Task<IEnumerable<Activity>> GetAllAsync()
+        {
+            return await _context.Set<Activity>().ToListAsync();
+        }
+
+        public async Task<Activity?> GetByIdAsync(int id)
         {
             try
             {
-                var activitys = await _activityData.GetAllAsync();
-                var activitysDTO = new List<ActivityDTO>();
-
-                foreach (var activity in activitys)
-                {
-                    activitysDTO.Add(new ActivityDTO
-                    {
-                        ActivityId = activity.ActivityId,
-                        Name = activity.Name,
-                        Description = activity.Description,
-                        Category = activity.Category,
-                        Price = activity.Price,
-                        DurationHours = activity.DurationHours
-                    });
-                }
-
-                return activitysDTO;
+                return await _context.Set<Activity>().FindAsync(id);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error al obtener todas las actividades");
-                throw new ExternalServiceException("Base de datos", "Error al recuperar la lista de actividades", ex);
+                _logger.LogError(ex, "Error al obtener actividad con ID {ActivityId}", id);
+                throw; //Re-lanza la excepción para que sea manejada en capas superiores
             }
         }
 
-        // Método para obtener una actividad por ID como DTO
-        public async Task<ActivityDTO> GetActivityByIdAsync(int id)
+        ///<summary>
+        ///Crea un nuevo rol en la base de datos.
+        ///</summary>
+        ///<param name="activity">Instancia del rol a crear.</param>
+        ///<returns>El rol creado.</returns>
+        public async Task<Activity> CreateAsync(Activity activity)
         {
-            if (id <= 0)
-            {
-                _logger.LogWarning("Se intentó obtener una catividad con ID inválido: {ActivityId}", id);
-                throw new Utilities.Exceptions.ValidationException("id", "El ID de actividad debe ser mayor que cero");
-            }
-
             try
             {
-                var activity = await _activityData.GetByIdAsync(id);
+                await _context.Set<Activity>().AddAsync(activity);
+                await _context.SaveChangesAsync();
+                return activity;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error al crear actividad: {ex.Message}");
+                throw;
+            }
+        }
+
+        ///<summary>
+        ///Actualiza un rol existente en la base de datos.
+        ///</summary>
+        ///<param name="activity">Objeto con la información actualizada.</param>
+        ///<returns>True si la operación fue exitosa, False en caso contrario.</returns>
+        public async Task<bool> UpdateAsync(Activity activity)
+        {
+            try
+            {
+                _context.Set<Activity>().Update(activity);
+                await _context.SaveChangesAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error al actualizar actividad: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Realiza un eliminado lógico de la actvididad (marca el campo DeleteAt).
+        /// </summary>
+        /// <param name="id">ID de la actividad a eliminar lógicamente.</param>
+        /// <returns>True si la operación fue exitosa, False si no se encontró la actividad.</returns>
+        public async Task<bool> SoftDeleteAsync(int id)
+        {
+            try
+            {
+                var activity = await _context.Set<Activity>().FindAsync(id);
                 if (activity == null)
-                {
-                    _logger.LogInformation("No se encontró ningúna actividad con ID: {ActivityId}", id);
-                    throw new EntityNotFoundException("Activity", id);
-                }
+                    return false;
 
-                return new ActivityDTO
-                {
-                    ActivityId = activity.ActivityId,
-                    Name = activity.Name,
-                    Description = activity.Description,
-                    Category = activity.Category,
-                    Price = activity.Price
-                };
+                activity.DeleteAt = DateTime.UtcNow;
+                _context.Set<Activity>().Update(activity);
+
+                await _context.SaveChangesAsync();
+                return true;
             }
-
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error al obtener la actividad con ID: {ActivityId}", id);
-                throw new ExternalServiceException("Base de datos", $"Error al recuperar la actividad con ID {id}", ex);
+                _logger.LogError(ex, "Error al realizar el eliminado lógico del rol con ID {RolId}", id);
+                return false;
             }
         }
 
-        // Método para crear la actividad desde un DTO
-        public async Task<ActivityDTO> CreateActivityAsync(ActivityDTO ActivityDto)
+        ///<summary>
+        ///Elimina un rol de la base de datos.
+        ///</summary>
+        ///<param name="id">Identificador único del rol a eliminar.</param>
+        ///<returns>True si la operación fue exitosa, False en caso contrario.</returns>
+        public async Task<bool> DeleteAsync(int id)
         {
             try
             {
-                ValidateActivity(ActivityDto);
+                var activity = await _context.Set<Activity>().FindAsync(id);
+                if (activity == null)
+                    return false;
 
-
-                var activity = new Activity
-                {
-                    Name = ActivityDto.Name,
-                    Description = ActivityDto.Description,
-                    Category = ActivityDto.Category,
-                    Price = ActivityDto.Price,
-                    DurationHours = ActivityDto.DurationHours
-
-                };
-                activity.CreateAt = DateTime.Now;
-
-
-                var activityCreado = await _activityData.CreateAsync(activity);
-
-                return new ActivityDTO
-                {
-                    ActivityId = activityCreado.ActivityId,
-                    Name = activityCreado.Name,
-                    Description = activityCreado.Description,
-                    Category = activityCreado.Category,
-                    Price = activityCreado.Price,
-                    DurationHours = activityCreado.DurationHours
-                };
-
+                _context.Set<Activity>().Remove(activity);
+                await _context.SaveChangesAsync();
+                return true;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error al crear nueva actividad: {Name}", ActivityDto?.Name ?? "null");
-                throw new ExternalServiceException("Base de datos", "Error al crear la actividad", ex);
+                Console.WriteLine($"Error al eliminar actividad: {ex.Message}");
+                return false;
             }
         }
 
-        // Método para validar el DTO
-        private void ValidateActivity(ActivityDTO ActivityDto)
-        {
-            if (ActivityDto == null)
-            {
-                throw new Utilities.Exceptions.ValidationException("El objeto actividad no puede ser nulo");
-            }
-
-            if (string.IsNullOrWhiteSpace(ActivityDto.Name))
-            {
-                _logger.LogWarning("Se intentó crear/actualizar una actividad con Name vacío");
-                throw new Utilities.Exceptions.ValidationException("Name", "El Name de la actividad es obligatorio");
-            }
-        }
-
-        // Método para actualizar la actividad desde un DTO
-        public async Task<ActivityDTO?> UpdateActivityAsync(ActivityDTO ActivityDto)
+        /// <summary>
+        /// Actualiza una actividad existente en la base de datos.
+        /// </summary>
+        /// <param name="rol">Instancia de la actividad con datos actualizados.</param>
+        /// <returns>La actividad actualizada.</returns>
+        public async Task<Activity> UpdateActivityAsync(Activity activity)
         {
             try
             {
-                ValidateActivity(ActivityDto);
-
-                var activityExistente = await _activityData.GetByIdAsync(ActivityDto.ActivityId);
-
-                if (activityExistente == null)
-                {
-                    return null; // El controlador se encarga de devolver NotFound
-                }
-
-                activityExistente.Name = ActivityDto.Name;
-                activityExistente.Description = ActivityDto.Description;
-                activityExistente.Category = ActivityDto.Category;
-                activityExistente.Price = ActivityDto.Price;
-                activityExistente.DurationHours = ActivityDto.DurationHours;
-
-
-                var activityActualizado = await _activityData.UpdateActivityAsync(activityExistente);
-
-                return new ActivityDTO
-                {
-                    ActivityId = activityActualizado.ActivityId,
-                    Name = activityActualizado.Name,
-                    Description = activityActualizado.Description,
-                    Category = activityActualizado.Category,
-                    Price = activityActualizado.Price,
-                    DurationHours = activityActualizado.DurationHours
-
-                };
+                _context.Set<Activity>().Update(activity);
+                await _context.SaveChangesAsync();
+                return activity;
             }
             catch (Exception ex)
+
             {
-                _logger.LogError(ex, "Error al actualizar actividad: {ActivityId}", ActivityDto?.ActivityId ?? 0);
-                throw new ExternalServiceException("Base de datos", "Error al actualizar la actividad", ex);
+                _logger.LogError($"Error al actualizar la actividad: {ex.Message}");
+                throw;
             }
         }
 
-        // Método para eliminar una actividad desde el DTO
-        public async Task<bool> DeleteActivityAsync(int id)
+        /// <summary>
+        /// Restaura una actividad eliminada lógicamente (pone DeleteAt en null).
+        /// </summary>
+        /// <param name="id">ID del rol a restaurar.</param>
+        /// <returns>True si la operación fue exitosa, False si no se encontró el rol.</returns>
+        public async Task<bool> RestoreAsync(int id)
         {
             try
             {
-                var activityExistente = await _activityData.GetByIdAsync(id);
+                var activity = await _context.Set<Activity>().FindAsync(id);
+                if (activity == null)
+                    return false;
 
-                if (activityExistente == null)
-                {
-                    return false; // El rol no existe
-                }
+                activity.DeleteAt = null;
+                _context.Set<Activity>().Update(activity);
 
-                var result = await _activityData.DeleteAsync(id);
-
-                return result; // Devuelve true si se eliminó correctamente, false si no
+                await _context.SaveChangesAsync();
+                return true;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error al eliminar actividad con ID: {ActivityId}", id);
-                throw new ExternalServiceException("Base de datos", $"Error al eliminar la actividad con ID {id}", ex);
-            }
-        }
-
-        // Elimina lógicamente una actividad (soft delete).
-        public async Task<bool> SoftDeleteActivityAsync(int id)
-        {
-            if (id <= 0)
-            {
-                _logger.LogWarning("Se intentó eliminar lógicamente una actividad con ID inválido: {ActivityId}", id);
-                throw new Utilities.Exceptions.ValidationException("id", "El ID de la actividad debe ser mayor que cero");
-            }
-
-            try
-            {
-                var result = await _activityData.SoftDeleteAsync(id);
-                return result;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error al realizar el eliminado lógico de la actividad con ID: {ActivityId}", id);
-                throw new ExternalServiceException("Base de datos", "Error al eliminar lógicamente la actividad", ex);
-            }
-        }
-
-        // Restaura una actividad eliminada lógicamente.
-        public async Task<bool> RestoreActivityAsync(int id)
-        {
-            if (id <= 0)
-            {
-                _logger.LogWarning("Se intentó restaurar una actividad con ID inválido: {ActivityId}", id);
-                throw new Utilities.Exceptions.ValidationException("id", "El ID de la actividad debe ser mayor que cero");
-            }
-
-            try
-            {
-                var result = await _activityData.RestoreAsync(id);
-                return result;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error al restaurar la actividad con ID: {RolId}", id);
-                throw new ExternalServiceException("Base de datos", "Error al restaurar la actividad", ex);
-            }
-        }
-        //Método para actualizar parcialmente los campos de una actividad.
-
-        public async Task<ActivityDTO?> PartialUpdateActivityAsync(int id, ActivityDTO activityDto)
-        {
-            try
-            {
-                var existingActivity = await _activityData.GetByIdAsync(id);
-
-                if (existingActivity == null)
-                {
-                    return null;
-                }
-
-                // Solo actualizamos los campos que vienen no nulos o no vacíos
-                if (!string.IsNullOrWhiteSpace(activityDto.Name))
-                    existingActivity.Name = activityDto.Name;
-
-                if (!string.IsNullOrWhiteSpace(activityDto.Description))
-                    existingActivity.Description = activityDto.Description;
-
-                if (!string.IsNullOrWhiteSpace(activityDto.Category))
-                    existingActivity.Category = activityDto.Category;
-
-                if (activityDto.Price > 0)
-                    existingActivity.Price = activityDto.Price;
-
-                if (activityDto.DurationHours != default)
-                    existingActivity.DurationHours = activityDto.DurationHours;
-
-                var updatedActivity = await _activityData.UpdateActivityAsync(existingActivity);
-
-                return new ActivityDTO
-                {
-                    ActivityId = updatedActivity.ActivityId,
-                    Name = updatedActivity.Name,
-                    Description = updatedActivity.Description,
-                    Category = updatedActivity.Category,
-                    Price = updatedActivity.Price,
-                    DurationHours = updatedActivity.DurationHours
-
-                };
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error al actualizar parcialmente la actividad con ID: {ActivityId}", id);
-                throw new ExternalServiceException("Base de datos", $"Error al actualizar parcialmente la actividad con ID {id}", ex);
+                _logger.LogError(ex, "Error al restaurar la actividad con ID {ActivityId}", id);
+                return false;
             }
         }
     }

@@ -12,4 +12,3 @@ namespace Entity.Model
         public string Name { get; set; }
     }
 }
-

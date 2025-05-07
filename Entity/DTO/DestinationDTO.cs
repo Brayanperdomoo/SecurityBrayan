@@ -1,3 +1,4 @@
+
 namespace Entity.DTO
 {
     public class DestinationDTO

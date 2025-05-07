@@ -44,7 +44,7 @@ builder.Services.AddScoped<DestinationData>();
 builder.Services.AddScoped<DestinationBusiness>();
 
 // Registrar clases de Actividad
-builder.Services.AddScoped<ActivityData>();
+builder.Services.AddScoped<Business.ActivityData>();
 builder.Services.AddScoped<ActivityBusiness>();
 
 

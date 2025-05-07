@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Data
 {
     /// <summary>
-    /// Repositorio encargado de la gestión de la entidad Rol en la base de datos.
+    /// Repositorio encargado de la gestión de la entidad Usuario en la base de datos.
     /// </summary>
     public class UserData
     {
@@ -24,9 +24,9 @@ namespace Data
         }
 
         ///<summary>
-        ///Obtiene todos los roles almacenados en la base de datos.
+        ///Obtiene todos los usuarios almacenados en la base de datos.
         ///</summary>
-        ///<returns>Lista de roles.</returns>
+        ///<returns>Lista de usuarios.</returns>
         public async Task<IEnumerable<User>> GetAllAsync()
         {
             return await _context.Set<User>().ToListAsync();
@@ -43,6 +43,17 @@ namespace Data
                 _logger.LogError(ex, "Error al obtener usuario con ID {UserId}", id);
                 throw; //Re-lanza la excepción para que sea manejada en capas superiores
             }
+        }
+
+        /// <summary>
+        /// Obtiene únicamente los usuarios que no están eliminados lógicamente.
+        /// </summary>
+        /// <returns>Lista de usuarios activos.</returns>
+        public async Task<IEnumerable<User>> GetAllActiveAsync()
+        {
+            return await _context.Set<User>()
+                                 .Where(u => u.DeleteAt == null)
+                                 .ToListAsync();
         }
 
         ///<summary>
@@ -108,5 +119,79 @@ namespace Data
                 return false;
             }
         }
+
+        /// <summary>
+        /// Actualiza un usuario existente en la base de datos.
+        /// </summary>
+        /// <param name="user">Instancia del usuario con datos actualizados.</param>
+        /// <returns>El usuario actualizado.</returns>
+        public async Task<User> UpdateUserAsync(User user)
+        {
+            try
+            {
+                _context.Set<User>().Update(user);
+                await _context.SaveChangesAsync();
+                return user;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error al actualizar el usuario: {ex.Message}");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Realiza un eliminado lógico del usuario (marca el campo DeleteAt).
+        /// </summary>
+        /// <param name="id">ID del usuario a eliminar lógicamente.</param>
+        /// <returns>True si la operación fue exitosa, False si no se encontró el usuario.</returns>
+        public async Task<bool> SoftDeleteAsync(int id)
+        {
+            try
+            {
+                var user = await _context.Set<User>().FindAsync(id);
+                if (user == null)
+                    return false;
+
+                user.DeleteAt = DateTime.UtcNow;
+                _context.Set<User>().Update(user);
+
+                await _context.SaveChangesAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al realizar el eliminado lógico del usuario con ID {UserId}", id);
+                return false;
+            }
+        }
+
+
+        /// <summary>
+        /// Restaura un usuario eliminado lógicamente (pone DeleteAt en null).
+        /// </summary>
+        /// <param name="id">ID del usuario a restaurar.</param>
+        /// <returns>True si la operación fue exitosa, False si no se encontró el usuario.</returns>
+        public async Task<bool> RestoreAsync(int id)
+        {
+            try
+            {
+                var user = await _context.Set<User>().FindAsync(id);
+                if (user == null)
+                    return false;
+
+                user.DeleteAt = null;
+                _context.Set<User>().Update(user);
+
+                await _context.SaveChangesAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al restaurar el usuario con ID {UserId}", id);
+                return false;
+            }
+        }
+
     }
 }

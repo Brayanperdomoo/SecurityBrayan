@@ -6,10 +6,6 @@ using Utilities.Exceptions;
 
 namespace Business
 {
-    /// <summary>
-    /// Clase de negocio encargada de la lógica relacionada con los persons del sistema.
-    /// </summary>
-
     public class PersonBusiness
     {
         private readonly PersonData _personData;
@@ -21,40 +17,43 @@ namespace Business
             _logger = logger;
         }
 
-        // Método para obtener todos los Person como DTOs
+        // Método para obtener todas las personas como DTOs
         public async Task<IEnumerable<PersonDTO>> GetAllPersonsAsync()
         {
             try
             {
                 var persons = await _personData.GetAllAsync();
-                var personDTOs = new List<PersonDTO>();
+                var personsDTO = new List<PersonDTO>();
 
                 foreach (var person in persons)
                 {
-                    personDTOs.Add(new PersonDTO
+                    personsDTO.Add(new PersonDTO
                     {
-                        PersonsId = person.PersonId,
+                        PersonId = person.PersonId,
+                        FirstName = person.FirstName,
                         LastName = person.LastName,
-                        FirstName = person.FirstName
+                        Document = person.Document,
+                        PhoneNumber = person.PhoneNumber,
+                        Email = person.Email
                     });
                 }
 
-                return personDTOs;
+                return personsDTO;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error al obtener todos los persons");
-                throw new ExternalServiceException("Base de datos", "Error al recuperar la lista de persons", ex);
+                _logger.LogError(ex, "Error al obtener todos las personas");
+                throw new ExternalServiceException("Base de datos", "Error al recuperar la lista de personas", ex);
             }
         }
 
-        // Método para obtener un persons por ID como DTO
+        // Método para obtener una persona por ID como DTO
         public async Task<PersonDTO> GetPersonByIdAsync(int id)
         {
             if (id <= 0)
             {
-                _logger.LogWarning("Se intentó obtener un person con ID inválido: {personId}", id);
-                throw new Utilities.Exceptions.ValidationException("id", "El ID del person debe ser mayor que cero");
+                _logger.LogWarning("Se intentó obtener una persona con ID inválido: {PersonId}", id);
+                throw new Utilities.Exceptions.ValidationException("id", "El ID de la persona debe ser mayor que cero");
             }
 
             try
@@ -62,68 +61,76 @@ namespace Business
                 var person = await _personData.GetByIdAsync(id);
                 if (person == null)
                 {
-                    _logger.LogInformation("No se encontró ningún Person con ID: {PersonId}", id);
+                    _logger.LogInformation("No se encontró ningúna persona con ID: {PersonId}", id);
                     throw new EntityNotFoundException("Person", id);
                 }
 
                 return new PersonDTO
                 {
-                        PersonsId = person.PersonId,
-                        LastName = person.LastName,
-                        FirstName = person.FirstName
+                    FirstName = person.FirstName,
+                    LastName = person.LastName,
+                    Document = person.Document,
+                    PhoneNumber = person.PhoneNumber,
+                    Email = person.Email
                 };
             }
 
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error al obtener el Person con ID: {PersonId}", id);
-                throw new ExternalServiceException("Base de datos", $"Error al recuperar el rol con ID {id}", ex);
+                _logger.LogError(ex, "Error al obtener la persona con ID: {PersonId}", id);
+                throw new ExternalServiceException("Base de datos", $"Error al recuperar la persona con ID {id}", ex);
             }
         }
 
-        // Método para crear un Person desde un DTO
+        // Método para crear una persona desde un DTO
         public async Task<PersonDTO> CreatePersonAsync(PersonDTO PersonDto)
         {
             try
             {
-                ValidatPerson(PersonDto);
+                ValidatePerson(PersonDto);
 
                 var person = new Person
                 {
-                    PersonId = PersonDto.PersonsId,
+                    FirstName = PersonDto.FirstName,
                     LastName = PersonDto.LastName,
-                    FirstName = PersonDto.FirstName
+                    Document = PersonDto.Document,
+                    PhoneNumber = PersonDto.PhoneNumber,
+                    Email = PersonDto.Email
                 };
 
                 var personCreado = await _personData.CreateAsync(person);
 
                 return new PersonDTO
                 {
-                    PersonsId = personCreado.PersonId,
+                    PersonId = personCreado.PersonId,
+                    FirstName = personCreado.FirstName,
                     LastName = personCreado.LastName,
-                    FirstName = personCreado.FirstName
+                    Document = personCreado.Document,
+                    PhoneNumber = personCreado.PhoneNumber,
+                    Email = personCreado.Email
                 };
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error al crear nuevo user: {PersonNombre}", PersonDto?.PersonName ?? "null");
-                throw new ExternalServiceException("Base de datos", "Error al crear el Person", ex);
+                _logger.LogError(ex, "Error al crear nueva persona: {RolNombre}", PersonDto?.FirstName ?? "null");
+                throw new ExternalServiceException("Base de datos", "Error al crear la persona", ex);
             }
         }
 
-        // Método para validar el Persons
-        private void ValidatPerson(PersonDTO PersonDto)
+        // Método para validar el DTO
+        private void ValidatePerson(PersonDTO PersonDto)
         {
             if (PersonDto == null)
             {
-                throw new Utilities.Exceptions.ValidationException("El objeto Person no puede ser nulo");
+                throw new Utilities.Exceptions.ValidationException("El objeto persona no puede ser nulo");
             }
 
-            if (string.IsNullOrWhiteSpace((string?)PersonDto.PersonName))
+            if (string.IsNullOrWhiteSpace(PersonDto.FirstName))
             {
-                _logger.LogWarning("Se intentó crear/actualizar un Person con Name vacío");
-                throw new Utilities.Exceptions.ValidationException("Name", "El Name del Person es obligatorio");
+                _logger.LogWarning("Se intentó crear/actualizar una persona con Name vacío");
+                throw new Utilities.Exceptions.ValidationException("Name", "El Name de la persona es obligatorio");
             }
         }
+
     }
 }

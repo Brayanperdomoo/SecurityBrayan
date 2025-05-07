@@ -1,272 +1,123 @@
-﻿using Business;
-using Data;
+﻿using Data;
 using Entity.DTO;
-using Microsoft.AspNetCore.Mvc;
+using Entity.Model;
 using Microsoft.Extensions.Logging;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using Utilities.Exceptions;
 
-namespace Web.Controllers
+namespace Business
 {
-    /// <summary>
-    /// Controlador para la gestión de actividades en el sistema
-    /// </summary>
-    [Route("api/[controller]")]
-    [ApiController]
-    [Produces("application/json")]
-    public class ActivityController : ControllerBase
+    public class ActivityBusiness
     {
-        private readonly ActivityBusiness _ActivityBusiness;
-        private readonly ILogger<ActivityController> _logger;
+        private readonly ActivityData _ActivityData;
+        private readonly ILogger<Activity> _logger;
 
-        /// <summary>
-        /// Constructor del controlador de actividades
-        /// </summary>
-        public ActivityController(ActivityBusiness ActivityBusiness, ILogger<ActivityController> logger)
+        public ActivityBusiness(ActivityData ActivityData, ILogger<Activity> logger)
         {
-            _ActivityBusiness = ActivityBusiness;
+            _ActivityData = ActivityData;
             _logger = logger;
         }
 
-        /// <summary>
-        /// Obtiene todas las actividades del sistema
-        /// </summary>
-        [HttpGet]
-        [ProducesResponseType(typeof(IEnumerable<ActivityDTO>), 200)]
-        [ProducesResponseType(500)]
-        public async Task<IActionResult> GetAllActivity()
+        // Método para obtener todos los cambios como DTOs
+        public async Task<IEnumerable<ActivityDTO>> GetAllActivitysAsync()
         {
             try
             {
-                var activitys = await _ActivityBusiness.GetAllActivitysAsync();
-                return Ok(activitys);
-            }
-            catch (ExternalServiceException ex)
-            {
-                _logger.LogError(ex, "Error al obtener actividades");
-                return StatusCode(500, new { message = ex.Message });
-            }
-        }
+                var changesLogs = await _ActivityData.GetAllAsync();
+                var changesLogsDTO = new List<ActivityDTO>();
 
-        /// <summary>
-        /// Obtiene una actividad específica por su ID
-        /// </summary>
-        [HttpGet("{id}")]
-        [ProducesResponseType(typeof(ActivityDTO), 200)]
-        [ProducesResponseType(400)]
-        [ProducesResponseType(404)]
-        [ProducesResponseType(500)]
-        public async Task<IActionResult> GetActivityById(int id)
-        {
-            try
-            {
-                var activity = await _ActivityBusiness.GetActivityByIdAsync(id);
-                return Ok(activity);
-            }
-            catch (ValidationException ex)
-            {
-                _logger.LogWarning(ex, "Validación fallida para actividad con ID: {ActivityId}", id);
-                return BadRequest(new { message = ex.Message });
-            }
-            catch (EntityNotFoundException ex)
-            {
-                _logger.LogInformation(ex, "Actividad no encontrado con ID: {ActivityId}", id);
-                return NotFound(new { message = ex.Message });
-            }
-            catch (ExternalServiceException ex)
-            {
-                _logger.LogError(ex, "Error al obtener actividad con ID: {ActivityId}", id);
-                return StatusCode(500, new { message = ex.Message });
-            }
-        }
-
-        /// <summary>
-        /// Crea una nueva actividad en el sistema
-        /// </summary>
-        [HttpPost]
-        [ProducesResponseType(typeof(FormDTO), 201)]
-        [ProducesResponseType(400)]
-        [ProducesResponseType(500)]
-        public async Task<IActionResult> CreateDestination([FromBody] ActivityDTO ActivityDto)
-        {
-            try
-            {
-                var createdActivity = await _ActivityBusiness.CreateActivityAsync(ActivityDto);
-                return CreatedAtAction(nameof(GetActivityById), new { id = createdActivity.ActivityId }, createdActivity);
-            }
-            catch (ValidationException ex)
-            {
-                _logger.LogWarning(ex, "Validación fallida al crear actividad");
-                return BadRequest(new { message = ex.Message });
-            }
-            catch (ExternalServiceException ex)
-            {
-                _logger.LogError(ex, "Error al crear actividad");
-                return StatusCode(500, new { message = ex.Message });
-            }
-        }
-
-
-        /// <summary>
-        /// Actualiza los datos de una actividad existente
-        /// </summary>
-        [HttpPut("{id}")]
-        [ProducesResponseType(typeof(ActivityDTO), 200)]
-        [ProducesResponseType(400)]
-        [ProducesResponseType(404)]
-        [ProducesResponseType(500)]
-        public async Task<IActionResult> UpdateActivity(int id, [FromBody] ActivityDTO activityDto)
-        {
-            // Forzar que el ID en el DTO sea el mismo que el de la URL
-            activityDto.ActivityId = id;
-
-            try
-            {
-                var updatedActivity = await _ActivityBusiness.UpdateActivityAsync(activityDto);
-
-                if (updatedActivity == null)
+                foreach (var Activity in changesLogs)
                 {
-                    return NotFound(new { message = $"No se encontró una actividad con ID {id}" });
+                    changesLogsDTO.Add(new ActivityDTO
+                    {
+                        ActivityId = Activity.ActivityId,
+                        Description = Activity.Description,
+                        Name = Activity.Name
+                    });
                 }
 
-                return Ok(updatedActivity);
-            }
-            catch (ValidationException ex)
-            {
-                _logger.LogWarning(ex, "Validación fallida al actualizar actividad");
-                return BadRequest(new { message = ex.Message });
-            }
-            catch (ExternalServiceException ex)
-            {
-                _logger.LogError(ex, "Error al actualizar adctividad");
-                return StatusCode(500, new { message = ex.Message });
-            }
-        }
-
-        /// <summary>
-        /// Elimina una actividad de la base de datos.
-        /// </summary>
-        [HttpDelete("{id}")]
-        [ProducesResponseType(typeof(string), 200)]
-        [ProducesResponseType(404)]
-        [ProducesResponseType(500)]
-        public async Task<IActionResult> DeleteActivity(int id)
-        {
-            try
-            {
-                var isDeleted = await _ActivityBusiness.DeleteActivityAsync(id);
-
-                if (!isDeleted)
-                {
-                    return NotFound(new { message = $"No se encontró una actividad con ID {id}" });
-                }
-
-                return Ok(new { message = "Actividad eliminada correctamente" });
+                return changesLogsDTO;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error al eliminar actividad con ID: {RolId}", id);
-                return StatusCode(500, new { message = ex.Message });
+                _logger.LogError(ex, "Error al obtener todos los cambios");
+                throw new ExternalServiceException("Base de datos", "Error al recuperar la lista de cambios", ex);
             }
         }
 
-        /// <summary>
-        /// Elimina lógicamente una actividad del sistema
-        /// </summary>
-        [HttpDelete("softdelete/{id}")]
-        [ProducesResponseType(204)]
-        [ProducesResponseType(400)]
-        [ProducesResponseType(404)]
-        [ProducesResponseType(500)]
-        public async Task<IActionResult> SoftDeleteActivity(int id)
+        // Método para obtener un cambio por ID como DTO
+        public async Task<ActivityDTO> GetActivityByIdAsync(int id)
         {
+            if (id <= 0)
+            {
+                _logger.LogWarning("Se intentó obtener un cambio con ID inválido: {ActivityId}", id);
+                throw new Utilities.Exceptions.ValidationException("id", "El ID del cambio debe ser mayor que cero");
+            }
+
             try
             {
-                var result = await _ActivityBusiness.SoftDeleteActivityAsync(id);
-
-                if (!result)
+                var Activity = await _ActivityData.GetByIdAsync(id);
+                if (Activity == null)
                 {
-                    return NotFound(new { message = $"No se encontró una actividad con ID {id}" });
+                    _logger.LogInformation("No se encontró ningún cambio con ID: {ActivityId}", id);
+                    throw new EntityNotFoundException("Usuario", id);
                 }
 
-                return NoContent(); // Eliminado lógico exitoso
+                return new ActivityDTO
+                {
+                    ActivityId = Activity.ActivityId,
+                    Description = Activity.Description,
+                    Name = Activity.Name
+                };
             }
-            catch (ValidationException ex)
+
+            catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Validación fallida al intentar eliminar lógicamente actividad");
-                return BadRequest(new { message = ex.Message });
-            }
-            catch (ExternalServiceException ex)
-            {
-                _logger.LogError(ex, "Error al eliminar lógicamente actividad");
-                return StatusCode(500, new { message = ex.Message });
+                _logger.LogError(ex, "Error al obtener el cambio con ID: {ActivityId}", id);
+                throw new ExternalServiceException("Base de datos", $"Error al recuperar el cambio con ID {id}", ex);
             }
         }
 
-        /// <summary>
-        /// Restaura una actividad eliminada lógicamente.
-        /// </summary>
-        [HttpPatch("restore/{id}")]
-        [ProducesResponseType(200)]
-        [ProducesResponseType(400)]
-        [ProducesResponseType(404)]
-        [ProducesResponseType(500)]
-        public async Task<IActionResult> RestoreActivity(int id)
+        // Método para crear un cambio desde un DTO
+        public async Task<ActivityDTO> CreateActivityAsync(ActivityDTO ActivityDto)
         {
             try
             {
-                var result = await _ActivityBusiness.RestoreActivityAsync(id);
+                ValidateActivity(ActivityDto);
 
-                if (!result)
+                var Activity = new Activity
                 {
-                    return NotFound(new { message = $"No se encontró una actividad con ID {id}" });
-                }
+                    Description = ActivityDto.Description,
+                    Name = ActivityDto.Name
+                };
 
-                return Ok(new { message = $"Actividad restaurada correctamente" });
+                var ActivityCreado = await _ActivityData.CreateAsync(Activity);
+
+                return new ActivityDTO
+                {
+                    ActivityId = ActivityCreado.ActivityId,
+                    Description = ActivityCreado.Description,
+                    Name = ActivityCreado.Name
+                };
             }
-            catch (ValidationException ex)
+            catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Validación fallida al intentar restaurar actividad");
-                return BadRequest(new { message = ex.Message });
-            }
-            catch (ExternalServiceException ex)
-            {
-                _logger.LogError(ex, "Error al restaurar actividad");
-                return StatusCode(500, new { message = ex.Message });
+                _logger.LogError(ex, "Error al crear nuevo cambio: {Description}", ActivityDto?.Description ?? "null");
+                throw new ExternalServiceException("Base de datos", "Error al crear el cambio", ex);
             }
         }
 
-        /// <summary>
-        /// Actualiza parcialmente los datos de una actividad existente.
-        /// </summary>
-        [HttpPatch("{id}")]
-        [ProducesResponseType(typeof(ActivityDTO), 200)]
-        [ProducesResponseType(400)]
-        [ProducesResponseType(404)]
-        [ProducesResponseType(500)]
-        public async Task<IActionResult> PartialUpdateRol(int id, [FromBody] ActivityDTO activityDto)
+        // Método para validar el DTO
+        private void ValidateActivity(ActivityDTO ActivityDto)
         {
-            try
+            if (ActivityDto == null)
             {
-                var updatedActivity = await _ActivityBusiness.PartialUpdateActivityAsync(id, activityDto);
-
-                if (updatedActivity == null)
-                {
-                    return NotFound(new { message = $"No se encontró un usuario con ID {id}" });
-                }
-
-                return Ok(updatedActivity);
+                throw new Utilities.Exceptions.ValidationException("El objeto cambio no puede ser nulo");
             }
-            catch (ValidationException ex)
+
+            if (string.IsNullOrWhiteSpace(ActivityDto.Description))
             {
-                _logger.LogWarning(ex, "Validación fallida al modificar parte del usuario");
-                return BadRequest(new { message = ex.Message });
-            }
-            catch (ExternalServiceException ex)
-            {
-                _logger.LogError(ex, "Error al modificar parte del usuario");
-                return StatusCode(500, new { message = ex.Message });
+                _logger.LogWarning("Se intentó crear/actualizar un cambio con Description vacío");
+                throw new Utilities.Exceptions.ValidationException("Description", "El Description del cambio es obligatorio");
             }
         }
     }
